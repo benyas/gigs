@@ -9,6 +9,7 @@
     "target": "ES2022",
     "sourceMap": true,
     "outDir": "./dist",
+    "rootDir": "./src",
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
@@ -18,11 +19,8 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "paths": {
-      "@gigs/shared": ["../../packages/shared/src"]
-    }
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*", "../../packages/shared/src/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
