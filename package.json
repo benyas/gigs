@@ -1,0 +1,20 @@
+{
+  "name": "gigs-ma",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TaskRabbit-style marketplace for Morocco",
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "format": "prettier --write .",
+    "db:migrate": "pnpm --filter @gigs/api run db:migrate",
+    "db:seed": "pnpm --filter @gigs/api run db:seed",
+    "db:studio": "pnpm --filter @gigs/api run db:studio",
+    "search:sync": "pnpm --filter @gigs/api run search:sync"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}

@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.next/
+.turbo/
+*.tsbuildinfo
+.env
+.env.local
+*.log
+coverage/
+.DS_Store
+tmp/
+minio-data/
+postgres-data/
+redis-data/
+meilisearch-data/
