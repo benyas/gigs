@@ -104,7 +104,24 @@ async function main() {
     },
   });
 
-  console.log('Created demo users (provider + client)');
+  await prisma.user.upsert({
+    where: { phone: '+212600000000' },
+    update: {},
+    create: {
+      phone: '+212600000000',
+      email: 'admin@gigs.ma',
+      passwordHash,
+      role: 'admin',
+      profile: {
+        create: {
+          name: 'Admin Gigs.ma',
+          isVerified: true,
+        },
+      },
+    },
+  });
+
+  console.log('Created demo users (admin + provider + client)');
 
   // Demo gigs
   const demoGigs = [

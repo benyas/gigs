@@ -13,6 +13,7 @@ import { MeilisearchModule } from './meilisearch/meilisearch.module';
 import { BullmqModule } from './bullmq/bullmq.module';
 import { StorageModule } from './storage/storage.module';
 import { ProfileModule } from './profile/profile.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { ProfileModule } from './profile/profile.module';
     BullmqModule,
     StorageModule,
     ProfileModule,
+    AdminModule,
   ],
   providers: [
     {

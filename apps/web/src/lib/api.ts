@@ -91,3 +91,42 @@ export const profile = {
   update: (data: any, token: string) =>
     apiFetch<any>('/profile', { method: 'PATCH', body: JSON.stringify(data), token }),
 };
+
+// Admin
+export const admin = {
+  stats: (token: string) => apiFetch<any>('/admin/stats', { token }),
+  users: (token: string, page = 1, role?: string, q?: string) => {
+    const params = new URLSearchParams({ page: String(page) });
+    if (role) params.set('role', role);
+    if (q) params.set('q', q);
+    return apiFetch<{ data: any[]; meta: any }>(`/admin/users?${params}`, { token });
+  },
+  updateUserRole: (id: string, role: string, token: string) =>
+    apiFetch<any>(`/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }), token }),
+  verifyUser: (id: string, verified: boolean, token: string) =>
+    apiFetch<any>(`/admin/users/${id}/verify`, { method: 'PATCH', body: JSON.stringify({ verified }), token }),
+  gigs: (token: string, page = 1, status?: string) => {
+    const params = new URLSearchParams({ page: String(page) });
+    if (status) params.set('status', status);
+    return apiFetch<{ data: any[]; meta: any }>(`/admin/gigs?${params}`, { token });
+  },
+  updateGigStatus: (id: string, status: string, token: string) =>
+    apiFetch<any>(`/admin/gigs/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }), token }),
+  bookings: (token: string, page = 1, status?: string) => {
+    const params = new URLSearchParams({ page: String(page) });
+    if (status) params.set('status', status);
+    return apiFetch<{ data: any[]; meta: any }>(`/admin/bookings?${params}`, { token });
+  },
+  createCategory: (data: any, token: string) =>
+    apiFetch<any>('/admin/categories', { method: 'POST', body: JSON.stringify(data), token }),
+  updateCategory: (id: string, data: any, token: string) =>
+    apiFetch<any>(`/admin/categories/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
+  deleteCategory: (id: string, token: string) =>
+    apiFetch<any>(`/admin/categories/${id}`, { method: 'DELETE', token }),
+  createCity: (data: any, token: string) =>
+    apiFetch<any>('/admin/cities', { method: 'POST', body: JSON.stringify(data), token }),
+  updateCity: (id: string, data: any, token: string) =>
+    apiFetch<any>(`/admin/cities/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
+  deleteCity: (id: string, token: string) =>
+    apiFetch<any>(`/admin/cities/${id}`, { method: 'DELETE', token }),
+};
