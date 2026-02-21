@@ -289,6 +289,14 @@ export const coupons = {
     apiFetch<{ valid: boolean; discountAmount: number }>('/coupons/validate', {
       method: 'POST', body: JSON.stringify({ code, orderValue }), token,
     }),
+  list: (token: string, page = 1) =>
+    apiFetch<{ data: any[]; meta: any }>(`/admin/coupons?page=${page}`, { token }),
+  create: (data: any, token: string) =>
+    apiFetch<any>('/admin/coupons', { method: 'POST', body: JSON.stringify(data), token }),
+  update: (id: string, data: any, token: string) =>
+    apiFetch<any>(`/admin/coupons/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
+  remove: (id: string, token: string) =>
+    apiFetch<any>(`/admin/coupons/${id}`, { method: 'DELETE', token }),
 };
 
 // Referrals

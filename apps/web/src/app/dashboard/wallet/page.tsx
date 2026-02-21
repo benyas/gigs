@@ -1,9 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { payments } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Wallet, Clock, TrendingUp } from 'lucide-react';
 
 const TYPE_LABELS: Record<string, string> = {
   charge: 'Paiement recu',
@@ -18,20 +29,24 @@ const STATUS_LABELS: Record<string, string> = {
   failed: 'Echoue',
 };
 
+const statusBadge: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  completed: 'bg-green-100 text-green-800',
+  failed: 'bg-red-100 text-red-700',
+};
+
 export default function WalletPage() {
-  const { user, token, loading } = useAuth();
-  const router = useRouter();
+  const { token } = useAuth();
   const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [pageLoading, setPageLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState<any>(null);
 
   useEffect(() => {
-    if (loading) return;
-    if (!user || !token) { router.push('/auth/login'); return; }
+    if (!token) return;
     loadData();
-  }, [user, token, loading, router]);
+  }, [token]);
 
   async function loadData() {
     try {
@@ -43,7 +58,7 @@ export default function WalletPage() {
       setTransactions(t.data);
       setMeta(t.meta);
     } catch {}
-    setPageLoading(false);
+    setLoading(false);
   }
 
   async function loadPage(p: number) {
@@ -55,103 +70,93 @@ export default function WalletPage() {
     } catch {}
   }
 
-  if (loading || pageLoading) {
-    return (
-      <section className="section">
-        <div className="container" style={{ textAlign: 'center', padding: '4rem' }}>Chargement...</div>
-      </section>
-    );
+  if (loading) {
+    return <div className="flex items-center justify-center py-12 text-muted-foreground">Chargement...</div>;
   }
 
   return (
-    <section className="section">
-      <div className="container" style={{ maxWidth: 900 }}>
-        <h1 className="section-title">Portefeuille</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Portefeuille</h1>
 
-        {/* Balance Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-          <div className="card">
-            <div className="card-body" style={{ textAlign: 'center' }}>
-              <div style={{ color: 'var(--gray-400)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Solde disponible</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)' }}>
-                {(wallet?.balance || 0).toFixed(2)} MAD
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="card-body" style={{ textAlign: 'center' }}>
-              <div style={{ color: 'var(--gray-400)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>En attente (escrow)</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--warning)' }}>
-                {(wallet?.pendingBalance || 0).toFixed(2)} MAD
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="card-body" style={{ textAlign: 'center' }}>
-              <div style={{ color: 'var(--gray-400)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Total gagne</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--gray-700)' }}>
-                {(wallet?.totalEarned || 0).toFixed(2)} MAD
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Transactions */}
-        <h2 className="section-title" style={{ fontSize: '1.1rem' }}>Historique des transactions</h2>
-
-        {transactions.length === 0 ? (
-          <div className="card">
-            <div className="card-body" style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-400)' }}>
-              Aucune transaction
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {transactions.map((tx: any) => (
-              <div key={tx.id} className="card">
-                <div className="card-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>
-                      {TYPE_LABELS[tx.type] || tx.type}
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>
-                      {tx.booking?.gig?.title || '—'} &middot; {new Date(tx.createdAt).toLocaleDateString('fr-MA')}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{
-                      fontWeight: 700,
-                      color: tx.type === 'charge' ? 'var(--success)' : tx.type === 'refund' ? 'var(--danger)' : 'var(--gray-700)',
-                    }}>
-                      {tx.type === 'payout' || tx.type === 'refund' ? '-' : '+'}{tx.amount.toFixed(2)} MAD
-                    </div>
-                    <div style={{ fontSize: '0.75rem' }}>
-                      <span className={`badge badge-${tx.status === 'completed' ? 'green' : tx.status === 'failed' ? 'red' : 'yellow'}`}>
-                        {STATUS_LABELS[tx.status] || tx.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {meta && meta.totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
-            {Array.from({ length: meta.totalPages }, (_, i) => (
-              <button
-                key={i}
-                className={`btn btn-sm ${page === i + 1 ? 'btn-primary' : 'btn-outline'}`}
-                onClick={() => loadPage(i + 1)}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-        )}
+      {/* Balance Cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Solde disponible</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{(wallet?.balance || 0).toFixed(2)} MAD</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">En attente (escrow)</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-500">{(wallet?.pendingBalance || 0).toFixed(2)} MAD</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total gagne</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{(wallet?.totalEarned || 0).toFixed(2)} MAD</div>
+          </CardContent>
+        </Card>
       </div>
-    </section>
+
+      {/* Transactions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Historique des transactions</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {transactions.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">Aucune transaction</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Montant</TableHead>
+                  <TableHead>Statut</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions.map((tx: any) => (
+                  <TableRow key={tx.id}>
+                    <TableCell className="font-medium">{TYPE_LABELS[tx.type] || tx.type}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{tx.booking?.gig?.title || '-'}</TableCell>
+                    <TableCell>{new Date(tx.createdAt).toLocaleDateString('fr-MA')}</TableCell>
+                    <TableCell className={`font-semibold ${tx.type === 'charge' ? 'text-green-600' : tx.type === 'refund' ? 'text-red-600' : ''}`}>
+                      {tx.type === 'payout' || tx.type === 'refund' ? '-' : '+'}{tx.amount.toFixed(2)} MAD
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className={statusBadge[tx.status] || ''}>
+                        {STATUS_LABELS[tx.status] || tx.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {meta && meta.totalPages > 1 && (
+        <div className="flex justify-center gap-2">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => loadPage(page - 1)}>Precedent</Button>
+          <span className="flex items-center text-sm text-muted-foreground">Page {page} / {meta.totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= meta.totalPages} onClick={() => loadPage(page + 1)}>Suivant</Button>
+        </div>
+      )}
+    </div>
   );
 }

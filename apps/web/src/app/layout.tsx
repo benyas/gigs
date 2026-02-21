@@ -3,8 +3,7 @@ import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import './globals.css';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+import { LayoutShell } from '@/components/layout-shell';
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
 import { AuthProvider } from '@/lib/auth-context';
 import { isRtl } from '@/i18n/config';
@@ -62,9 +61,7 @@ export default async function RootLayout({
       <body>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
-            <Header />
-            <main>{children}</main>
-            <Footer />
+            <LayoutShell>{children}</LayoutShell>
             <ServiceWorkerRegistrar />
           </AuthProvider>
         </NextIntlClientProvider>

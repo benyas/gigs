@@ -1,9 +1,36 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { payouts } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Plus, Clock, CheckCircle2, Wallet, Lock } from 'lucide-react';
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'En attente',
@@ -12,40 +39,46 @@ const STATUS_LABELS: Record<string, string> = {
   failed: 'Echoue',
 };
 
+const statusBadge: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  processing: 'bg-blue-100 text-blue-700',
+  completed: 'bg-green-100 text-green-800',
+  failed: 'bg-red-100 text-red-700',
+};
+
 export default function AdminPayoutsPage() {
-  const { user, token, loading } = useAuth();
-  const router = useRouter();
+  const { token } = useAuth();
   const [data, setData] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
-  const [pageLoading, setPageLoading] = useState(true);
-  const [filter, setFilter] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState<any>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  // New payout form
-  const [showForm, setShowForm] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [providerId, setProviderId] = useState('');
   const [amount, setAmount] = useState('');
 
   useEffect(() => {
-    if (loading) return;
-    if (!user || user.role !== 'admin') { router.push('/'); return; }
+    if (!token) return;
     loadData();
-  }, [user, token, loading, router]);
+  }, [token]);
 
   async function loadData() {
     try {
+      const status = filter === 'all' ? undefined : filter;
       const [p, s] = await Promise.all([
-        payouts.list(token!, page, filter || undefined),
+        payouts.list(token!, page, status),
         payouts.stats(token!),
       ]);
       setData(p.data);
       setMeta(p.meta);
       setStats(s);
     } catch {}
-    setPageLoading(false);
+    setLoading(false);
   }
+
+  useEffect(() => { if (token) loadData(); }, [filter, page]);
 
   async function handleComplete(id: string) {
     setActionLoading(id);
@@ -63,7 +96,7 @@ export default function AdminPayoutsPage() {
     setActionLoading('create');
     try {
       await payouts.create(providerId, parseFloat(amount), token!);
-      setShowForm(false);
+      setDialogOpen(false);
       setProviderId('');
       setAmount('');
       await loadData();
@@ -73,146 +106,160 @@ export default function AdminPayoutsPage() {
     setActionLoading(null);
   }
 
-  if (loading || pageLoading) {
-    return (
-      <section className="section">
-        <div className="container" style={{ textAlign: 'center', padding: '4rem' }}>Chargement...</div>
-      </section>
-    );
+  if (loading) {
+    return <div className="flex items-center justify-center py-12 text-muted-foreground">Chargement...</div>;
   }
 
   return (
-    <section className="section">
-      <div className="container" style={{ maxWidth: 1000 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h1 className="section-title" style={{ marginBottom: 0 }}>Gestion des virements</h1>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowForm(!showForm)}>
-            {showForm ? 'Annuler' : 'Nouveau virement'}
-          </button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Gestion des virements</h1>
+        <Button onClick={() => setDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nouveau virement
+        </Button>
+      </div>
+
+      {/* Stats */}
+      {stats && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">En attente</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.pendingPayouts}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total verse</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{stats.totalPaidOut?.toFixed(2)} MAD</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Soldes disponibles</CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalAvailableBalance?.toFixed(2)} MAD</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">En escrow</CardTitle>
+              <Lock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-500">{stats.totalEscrowBalance?.toFixed(2)} MAD</div>
+            </CardContent>
+          </Card>
         </div>
+      )}
 
-        {/* Stats */}
-        {stats && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div className="card">
-              <div className="card-body" style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--gray-400)', fontSize: '0.8rem' }}>Virements en attente</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats.pendingPayouts}</div>
-              </div>
-            </div>
-            <div className="card">
-              <div className="card-body" style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--gray-400)', fontSize: '0.8rem' }}>Total verse</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>{stats.totalPaidOut.toFixed(2)} MAD</div>
-              </div>
-            </div>
-            <div className="card">
-              <div className="card-body" style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--gray-400)', fontSize: '0.8rem' }}>Soldes disponibles</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats.totalAvailableBalance.toFixed(2)} MAD</div>
-              </div>
-            </div>
-            <div className="card">
-              <div className="card-body" style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--gray-400)', fontSize: '0.8rem' }}>En escrow</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--warning)' }}>{stats.totalEscrowBalance.toFixed(2)} MAD</div>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Filter */}
+      <Select value={filter} onValueChange={(v) => { setFilter(v); setPage(1); }}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Tous les statuts" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tous les statuts</SelectItem>
+          <SelectItem value="pending">En attente</SelectItem>
+          <SelectItem value="processing">En cours</SelectItem>
+          <SelectItem value="completed">Termines</SelectItem>
+        </SelectContent>
+      </Select>
 
-        {/* New Payout Form */}
-        {showForm && (
-          <div className="card" style={{ marginBottom: '1.5rem' }}>
-            <div className="card-body">
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>Nouveau virement</h3>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <input
-                  className="form-input"
-                  placeholder="ID du prestataire"
-                  value={providerId}
-                  onChange={(e) => setProviderId(e.target.value)}
-                  style={{ flex: 1, minWidth: 200 }}
-                />
-                <input
-                  className="form-input"
-                  placeholder="Montant (MAD)"
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  style={{ width: 150 }}
-                />
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={handleCreatePayout}
-                  disabled={actionLoading === 'create'}
-                >
-                  {actionLoading === 'create' ? '...' : 'Creer'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Filter */}
-        <div style={{ marginBottom: '1rem' }}>
-          <select
-            className="form-input"
-            value={filter}
-            onChange={(e) => { setFilter(e.target.value); setPage(1); }}
-            style={{ width: 200 }}
-          >
-            <option value="">Tous les statuts</option>
-            <option value="pending">En attente</option>
-            <option value="processing">En cours</option>
-            <option value="completed">Termines</option>
-          </select>
-        </div>
-
-        {/* Payouts List */}
-        {data.length === 0 ? (
-          <div className="card">
-            <div className="card-body" style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-400)' }}>
-              Aucun virement
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {data.map((payout: any) => (
-              <div key={payout.id} className="card">
-                <div className="card-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>
-                      {payout.provider?.profile?.name || payout.providerId}
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>
-                      {new Date(payout.createdAt).toLocaleDateString('fr-MA')}
-                      {payout.processedAt && ` — Traite le ${new Date(payout.processedAt).toLocaleDateString('fr-MA')}`}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>
-                      {payout.amount.toFixed(2)} MAD
-                    </div>
-                    <span className={`badge badge-${payout.status === 'completed' ? 'green' : payout.status === 'failed' ? 'red' : 'yellow'}`}>
+      {/* Payouts Table */}
+      {data.length === 0 ? (
+        <div className="py-8 text-center text-muted-foreground">Aucun virement</div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Prestataire</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Montant</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((payout: any) => (
+                <TableRow key={payout.id}>
+                  <TableCell className="font-medium">
+                    {payout.provider?.profile?.name || payout.providerId?.substring(0, 8)}
+                  </TableCell>
+                  <TableCell>
+                    <div>{new Date(payout.createdAt).toLocaleDateString('fr-MA')}</div>
+                    {payout.processedAt && (
+                      <div className="text-xs text-muted-foreground">
+                        Traite: {new Date(payout.processedAt).toLocaleDateString('fr-MA')}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-lg font-semibold">{payout.amount.toFixed(2)} MAD</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className={statusBadge[payout.status] || ''}>
                       {STATUS_LABELS[payout.status] || payout.status}
-                    </span>
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
                     {payout.status !== 'completed' && payout.status !== 'failed' && (
-                      <button
-                        className="btn btn-sm btn-primary"
+                      <Button
+                        size="sm"
                         onClick={() => handleComplete(payout.id)}
                         disabled={actionLoading === payout.id}
                       >
                         {actionLoading === payout.id ? '...' : 'Marquer termine'}
-                      </button>
+                      </Button>
                     )}
-                  </div>
-                </div>
-              </div>
-            ))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {meta && meta.totalPages > 1 && (
+        <div className="flex justify-center gap-2">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Precedent</Button>
+          <span className="flex items-center text-sm text-muted-foreground">Page {page} / {meta.totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= meta.totalPages} onClick={() => setPage(page + 1)}>Suivant</Button>
+        </div>
+      )}
+
+      {/* Create Payout Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nouveau virement</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>ID du prestataire</Label>
+              <Input placeholder="ID du prestataire" value={providerId} onChange={(e) => setProviderId(e.target.value)} />
+            </div>
+            <div>
+              <Label>Montant (MAD)</Label>
+              <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </div>
           </div>
-        )}
-      </div>
-    </section>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
+            <Button onClick={handleCreatePayout} disabled={actionLoading === 'create' || !providerId || !amount}>
+              {actionLoading === 'create' ? 'Creation...' : 'Creer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

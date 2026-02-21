@@ -1,108 +1,127 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { admin } from '@/lib/api';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+const statusBadge: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  accepted: 'bg-blue-100 text-blue-700',
+  in_progress: 'bg-purple-100 text-purple-700',
+  completed: 'bg-green-100 text-green-800',
+  cancelled: 'bg-red-100 text-red-700',
+  disputed: 'bg-orange-100 text-orange-700',
+};
+
+const statusLabels: Record<string, string> = {
+  pending: 'En attente',
+  accepted: 'Acceptee',
+  in_progress: 'En cours',
+  completed: 'Terminee',
+  cancelled: 'Annulee',
+  disputed: 'Litige',
+};
 
 export default function AdminBookingsPage() {
-  const { user, token, loading } = useAuth();
-  const router = useRouter();
-  const [bookingsData, setBookingsData] = useState<any[]>([]);
+  const { token } = useAuth();
+  const [items, setItems] = useState<any[]>([]);
   const [meta, setMeta] = useState<any>({});
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState('');
-  const [dataLoading, setDataLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (loading) return;
-    if (!user || !token || user.role !== 'admin') { router.push('/'); return; }
-    fetchBookings();
-  }, [user, token, loading, router, page, statusFilter]);
-
-  function fetchBookings() {
+  const load = () => {
     if (!token) return;
-    setDataLoading(true);
-    admin.bookings(token, page, statusFilter || undefined)
-      .then((res) => { setBookingsData(res.data); setMeta(res.meta); })
+    setLoading(true);
+    const status = statusFilter === 'all' ? undefined : statusFilter;
+    admin.bookings(token, page, status)
+      .then((res) => { setItems(res.data); setMeta(res.meta); })
       .catch(() => {})
-      .finally(() => setDataLoading(false));
-  }
-
-  if (loading) return <section className="section"><div className="container" style={{ textAlign: 'center', padding: '4rem' }}>Chargement...</div></section>;
-
-  const statusLabels: Record<string, string> = {
-    pending: 'En attente', accepted: 'Acceptée', in_progress: 'En cours',
-    completed: 'Terminée', cancelled: 'Annulée', disputed: 'Litige',
+      .finally(() => setLoading(false));
   };
-  const statusColors: Record<string, string> = {
-    pending: 'badge-yellow', accepted: 'badge-blue', in_progress: 'badge-blue',
-    completed: 'badge-green', cancelled: 'badge-yellow', disputed: 'badge-yellow',
-  };
+
+  useEffect(() => { setPage(1); }, [statusFilter]);
+  useEffect(() => { load(); }, [token, page, statusFilter]);
 
   return (
-    <section className="section">
-      <div className="container">
-        <div style={{ marginBottom: '1rem' }}>
-          <Link href="/admin" style={{ color: '#6b7280' }}>&larr; Administration</Link>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Reservations ({meta.total || 0})</h1>
+
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Tous les statuts" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tous les statuts</SelectItem>
+          <SelectItem value="pending">En attente</SelectItem>
+          <SelectItem value="accepted">Acceptee</SelectItem>
+          <SelectItem value="in_progress">En cours</SelectItem>
+          <SelectItem value="completed">Terminee</SelectItem>
+          <SelectItem value="cancelled">Annulee</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {loading ? (
+        <div className="py-8 text-center text-muted-foreground">Chargement...</div>
+      ) : items.length === 0 ? (
+        <div className="py-8 text-center text-muted-foreground">Aucune reservation.</div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Service</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Prestataire</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Montant</TableHead>
+                <TableHead>Statut</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((b) => (
+                <TableRow key={b.id}>
+                  <TableCell className="font-medium">{b.gig?.title?.substring(0, 35) || '-'}</TableCell>
+                  <TableCell>{b.client?.profile?.name || '-'}</TableCell>
+                  <TableCell>{b.gig?.provider?.profile?.name || '-'}</TableCell>
+                  <TableCell>{new Date(b.scheduledAt || b.createdAt).toLocaleDateString('fr-MA')}</TableCell>
+                  <TableCell>{b.totalPrice} MAD</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className={statusBadge[b.status] || ''}>
+                      {statusLabels[b.status] || b.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-        <h1 className="section-title">Réservations ({meta.total || 0})</h1>
+      )}
 
-        <div className="filters" style={{ marginBottom: '1.5rem' }}>
-          <select className="form-input" style={{ width: 'auto' }} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
-            <option value="">Tous les statuts</option>
-            <option value="pending">En attente</option>
-            <option value="accepted">Acceptée</option>
-            <option value="in_progress">En cours</option>
-            <option value="completed">Terminée</option>
-            <option value="cancelled">Annulée</option>
-          </select>
+      {meta.totalPages > 1 && (
+        <div className="flex justify-center gap-2 pt-4">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Precedent</Button>
+          <span className="flex items-center text-sm text-muted-foreground">Page {page} / {meta.totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= meta.totalPages} onClick={() => setPage(page + 1)}>Suivant</Button>
         </div>
-
-        {dataLoading ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>Chargement...</div>
-        ) : bookingsData.length === 0 ? (
-          <div className="card"><div className="card-body" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>Aucune réservation.</div></div>
-        ) : (
-          <>
-            {bookingsData.map((b) => (
-              <div key={b.id} className="card" style={{ marginBottom: '0.75rem' }}>
-                <div className="card-body">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{b.gig?.title}</div>
-                      <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-                        Client: {b.client?.profile?.name} &middot;
-                        Prestataire: {b.gig?.provider?.profile?.name}
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-                        {new Date(b.scheduledAt).toLocaleDateString('fr-MA')} &middot; {b.totalPrice} MAD &middot; {b.address}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <span className={`badge ${statusColors[b.status] || 'badge-yellow'}`}>
-                        {statusLabels[b.status] || b.status}
-                      </span>
-                      {b.review && <span className="stars" title={`${b.review.rating}/5`}>{'★'.repeat(b.review.rating)}</span>}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {meta.totalPages > 1 && (
-              <div className="pagination">
-                {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((p) => (
-                  <button key={p} onClick={() => setPage(p)} style={{ cursor: 'pointer', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem 1rem', background: p === page ? 'var(--primary)' : 'white', color: p === page ? 'white' : 'inherit' }}>
-                    {p}
-                  </button>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </section>
+      )}
+    </div>
   );
 }

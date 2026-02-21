@@ -2,137 +2,209 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { admin } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Users,
+  Briefcase,
+  Calendar,
+  Star,
+  ShieldCheck,
+  AlertTriangle,
+  Ticket,
+  Tag,
+  MapPin,
+} from 'lucide-react';
+
+const statusBadge: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  accepted: 'bg-blue-100 text-blue-700',
+  in_progress: 'bg-purple-100 text-purple-700',
+  completed: 'bg-green-100 text-green-800',
+  cancelled: 'bg-red-100 text-red-700',
+};
 
 export default function AdminDashboard() {
-  const { user, token, loading } = useAuth();
-  const router = useRouter();
+  const { token } = useAuth();
   const [stats, setStats] = useState<any>(null);
-  const [dataLoading, setDataLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (loading) return;
-    if (!user || !token) {
-      router.push('/auth/login');
-      return;
-    }
-    if (user.role !== 'admin') {
-      router.push('/dashboard');
-      return;
-    }
+    if (!token) return;
     admin.stats(token)
       .then(setStats)
-      .catch((err) => setError(err.message || 'Erreur de chargement'))
-      .finally(() => setDataLoading(false));
-  }, [user, token, loading, router]);
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [token]);
 
-  if (loading || dataLoading) {
-    return <section className="section"><div className="container" style={{ textAlign: 'center', padding: '4rem' }}>Chargement...</div></section>;
-  }
-
-  if (error) {
-    return (
-      <section className="section">
-        <div className="container" style={{ textAlign: 'center', padding: '4rem' }}>
-          <div className="alert alert-error">{error}</div>
-          <p style={{ marginTop: '1rem', color: '#6b7280' }}>
-            Connectez-vous avec un compte admin pour acceder a cette page.
-          </p>
-          <Link href="/auth/login" className="btn btn-primary" style={{ marginTop: '1rem' }}>Se connecter</Link>
-        </div>
-      </section>
-    );
+  if (loading) {
+    return <div className="flex items-center justify-center py-12 text-muted-foreground">Chargement...</div>;
   }
 
   if (!stats) return null;
 
   return (
-    <section className="section">
-      <div className="container">
-        <h1 className="section-title">Administration</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Tableau de bord</h1>
 
-        {/* Stats Grid */}
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-          <StatCard label="Utilisateurs" value={stats.users.total} color="var(--primary)" />
-          <StatCard label="Clients" value={stats.users.clients} color="#3b82f6" />
-          <StatCard label="Prestataires" value={stats.users.providers} color="#8b5cf6" />
-          <StatCard label="Services" value={stats.gigs.total} sub={`${stats.gigs.active} actifs`} color="#f59e0b" />
-          <StatCard label="Réservations" value={stats.bookings.total} sub={`${stats.bookings.pending} en attente`} color="#ef4444" />
-          <StatCard label="Avis" value={stats.reviews.total} color="#10b981" />
-        </div>
-
-        {/* Quick Links */}
-        <div className="grid grid-3" style={{ marginBottom: '2rem' }}>
-          <Link href="/admin/users" className="card" style={{ textDecoration: 'none' }}>
-            <div className="card-body" style={{ padding: '1.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👥</div>
-              <div style={{ fontWeight: 600 }}>Gérer les utilisateurs</div>
-              <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>{stats.users.total} utilisateurs</div>
-            </div>
-          </Link>
-          <Link href="/admin/gigs" className="card" style={{ textDecoration: 'none' }}>
-            <div className="card-body" style={{ padding: '1.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
-              <div style={{ fontWeight: 600 }}>Gérer les services</div>
-              <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>{stats.gigs.total} services</div>
-            </div>
-          </Link>
-          <Link href="/admin/bookings" className="card" style={{ textDecoration: 'none' }}>
-            <div className="card-body" style={{ padding: '1.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📅</div>
-              <div style={{ fontWeight: 600 }}>Réservations</div>
-              <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>{stats.bookings.pending} en attente</div>
-            </div>
-          </Link>
-          <Link href="/admin/categories" className="card" style={{ textDecoration: 'none' }}>
-            <div className="card-body" style={{ padding: '1.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏷️</div>
-              <div style={{ fontWeight: 600 }}>Catégories</div>
-              <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Ajouter / modifier</div>
-            </div>
-          </Link>
-          <Link href="/admin/cities" className="card" style={{ textDecoration: 'none' }}>
-            <div className="card-body" style={{ padding: '1.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏙️</div>
-              <div style={{ fontWeight: 600 }}>Villes</div>
-              <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Ajouter / modifier</div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Recent Bookings */}
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Réservations récentes</h2>
-        {stats.recentBookings?.map((b: any) => (
-          <div key={b.id} className="card" style={{ marginBottom: '0.75rem' }}>
-            <div className="card-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: 600 }}>{b.gig?.title}</div>
-                <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-                  {b.client?.profile?.name} &middot; {new Date(b.createdAt).toLocaleDateString('fr-MA')} &middot; {b.totalPrice} MAD
-                </div>
-              </div>
-              <span className={`badge ${b.status === 'completed' ? 'badge-green' : b.status === 'pending' ? 'badge-yellow' : 'badge-blue'}`}>
-                {b.status}
-              </span>
-            </div>
-          </div>
-        ))}
+      {/* Stats Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Utilisateurs</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.users.total}</div>
+            <p className="text-xs text-muted-foreground">{stats.users.providers} prestataires, {stats.users.clients} clients</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Services</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.gigs.total}</div>
+            <p className="text-xs text-muted-foreground">{stats.gigs.active} actifs</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Reservations</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.bookings.total}</div>
+            <p className="text-xs text-muted-foreground">{stats.bookings.pending} en attente</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Avis</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.reviews.total}</div>
+            <p className="text-xs text-muted-foreground">Note moyenne: {stats.reviews.avgRating?.toFixed(1) || 'N/A'}</p>
+          </CardContent>
+        </Card>
       </div>
-    </section>
-  );
-}
 
-function StatCard({ label, value, sub, color }: { label: string; value: number; sub?: string; color: string }) {
-  return (
-    <div className="card">
-      <div className="card-body" style={{ textAlign: 'center', padding: '1.25rem' }}>
-        <div style={{ fontSize: '1.75rem', fontWeight: 700, color }}>{value}</div>
-        <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>{label}</div>
-        {sub && <div style={{ color: '#9ca3af', fontSize: '0.75rem' }}>{sub}</div>}
+      {/* Booking Status Breakdown */}
+      {stats.bookings.total > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Repartition des reservations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {(['pending', 'accepted', 'in_progress', 'completed', 'cancelled'] as const).map((s) => {
+                const count = stats.bookings[s] || 0;
+                const pct = stats.bookings.total > 0 ? (count / stats.bookings.total) * 100 : 0;
+                return (
+                  <div key={s} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="capitalize">{s.replace('_', ' ')}</span>
+                      <span className="text-muted-foreground">{count} ({pct.toFixed(0)}%)</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted">
+                      <div
+                        className={`h-2 rounded-full ${
+                          s === 'completed' ? 'bg-green-500' :
+                          s === 'pending' ? 'bg-yellow-500' :
+                          s === 'cancelled' ? 'bg-red-500' :
+                          s === 'in_progress' ? 'bg-purple-500' :
+                          'bg-blue-500'
+                        }`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">Acces rapide</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { href: '/admin/users', label: 'Utilisateurs', icon: Users, desc: `${stats.users.total} utilisateurs` },
+            { href: '/admin/gigs', label: 'Services', icon: Briefcase, desc: `${stats.gigs.total} services` },
+            { href: '/admin/bookings', label: 'Reservations', icon: Calendar, desc: `${stats.bookings.pending} en attente` },
+            { href: '/admin/verifications', label: 'Verifications', icon: ShieldCheck, desc: 'Gerer les documents' },
+            { href: '/admin/disputes', label: 'Litiges', icon: AlertTriangle, desc: 'Resoudre les litiges' },
+            { href: '/admin/coupons', label: 'Coupons', icon: Ticket, desc: 'Gerer les promos' },
+            { href: '/admin/categories', label: 'Categories', icon: Tag, desc: 'Ajouter / modifier' },
+            { href: '/admin/cities', label: 'Villes', icon: MapPin, desc: 'Ajouter / modifier' },
+          ].map((item) => (
+            <Link key={item.href} href={item.href} className="no-underline">
+              <Card className="transition-colors hover:bg-accent">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <item.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="font-medium">{item.label}</div>
+                    <div className="text-xs text-muted-foreground">{item.desc}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
       </div>
+
+      {/* Recent Bookings */}
+      {stats.recentBookings?.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Reservations recentes</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Montant</TableHead>
+                  <TableHead>Statut</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stats.recentBookings.map((b: any) => (
+                  <TableRow key={b.id}>
+                    <TableCell className="font-medium">{b.gig?.title?.substring(0, 40) || '-'}</TableCell>
+                    <TableCell>{b.client?.profile?.name || '-'}</TableCell>
+                    <TableCell>{new Date(b.createdAt).toLocaleDateString('fr-MA')}</TableCell>
+                    <TableCell>{b.totalPrice} MAD</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className={statusBadge[b.status] || ''}>
+                        {b.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
