@@ -25,6 +25,19 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T>
   return res.json();
 }
 
+async function apiUpload<T>(path: string, formData: FormData, token: string): Promise<T> {
+  const res = await fetch(`${API_URL}/api${path}`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Upload error: ${res.status}`);
+  }
+  return res.json();
+}
+
 // Auth
 export const auth = {
   login: (email: string, password: string) =>
@@ -61,6 +74,13 @@ export const gigs = {
     apiFetch<any>('/gigs', { method: 'POST', body: JSON.stringify(data), token }),
   update: (id: string, data: any, token: string) =>
     apiFetch<any>(`/gigs/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
+  uploadMedia: (gigId: string, files: File[], token: string) => {
+    const fd = new FormData();
+    files.forEach((f) => fd.append('files', f));
+    return apiUpload<any[]>(`/gigs/${gigId}/media`, fd, token);
+  },
+  deleteMedia: (gigId: string, mediaId: string, token: string) =>
+    apiFetch<any>(`/gigs/${gigId}/media/${mediaId}`, { method: 'DELETE', token }),
 };
 
 // Bookings
@@ -91,6 +111,7 @@ export const profile = {
   update: (data: any, token: string) =>
     apiFetch<any>('/profile', { method: 'PATCH', body: JSON.stringify(data), token }),
   provider: (id: string) => apiFetch<any>(`/profile/provider/${id}`),
+  stats: (token: string) => apiFetch<any>('/profile/stats', { token }),
 };
 
 // Admin

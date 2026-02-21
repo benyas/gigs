@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Conditions Generales d\'Utilisation',
+  description: 'Conditions generales d\'utilisation de la plateforme Gigs.ma.',
+};
+
 export default function TermsPage() {
   return (
     <section className="section">

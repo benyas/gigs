@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import { GigCard } from '@/components/GigCard';
 import { gigs, categories as categoriesApi, cities as citiesApi } from '@/lib/api';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Parcourir les services',
+  description: 'Trouvez des prestataires de services a domicile au Maroc. Filtrez par categorie, ville et prix.',
+};
 
 interface Props {
   searchParams: { [key: string]: string | undefined };
@@ -18,6 +24,7 @@ export default async function BrowsePage({ searchParams }: Props) {
   if (searchParams.minPrice) params.minPrice = searchParams.minPrice;
   if (searchParams.maxPrice) params.maxPrice = searchParams.maxPrice;
   if (searchParams.q) params.q = searchParams.q;
+  if (searchParams.sort) params.sort = searchParams.sort;
   if (searchParams.page) params.page = searchParams.page;
 
   try {
@@ -103,6 +110,7 @@ export default async function BrowsePage({ searchParams }: Props) {
             {searchParams.categoryId && <input type="hidden" name="categoryId" value={searchParams.categoryId} />}
             {searchParams.cityId && <input type="hidden" name="cityId" value={searchParams.cityId} />}
             {searchParams.q && <input type="hidden" name="q" value={searchParams.q} />}
+            {searchParams.sort && <input type="hidden" name="sort" value={searchParams.sort} />}
             <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>Prix :</span>
             <input
               name="minPrice"
@@ -131,11 +139,33 @@ export default async function BrowsePage({ searchParams }: Props) {
           )}
         </div>
 
-        {/* Results count */}
-        <p style={{ color: '#6b7280', marginBottom: '1rem', fontSize: '0.9rem' }}>
-          {meta.total} service{meta.total !== 1 ? 's' : ''} trouve{meta.total !== 1 ? 's' : ''}
-          {searchParams.q && <> pour &quot;{searchParams.q}&quot;</>}
-        </p>
+        {/* Results count + sort */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>
+            {meta.total} service{meta.total !== 1 ? 's' : ''} trouve{meta.total !== 1 ? 's' : ''}
+            {searchParams.q && <> pour &quot;{searchParams.q}&quot;</>}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>Trier par :</span>
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              {[
+                { value: 'recent', label: 'Recents' },
+                { value: 'price_asc', label: 'Prix +' },
+                { value: 'price_desc', label: 'Prix -' },
+                { value: 'rating', label: 'Avis' },
+              ].map((opt) => (
+                <Link
+                  key={opt.value}
+                  href={buildUrl({ sort: opt.value, page: '1' })}
+                  className={`btn btn-sm ${(searchParams.sort || 'recent') === opt.value ? 'btn-primary' : 'btn-outline'}`}
+                  style={{ fontSize: '0.8rem' }}
+                >
+                  {opt.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Results grid */}
         {gigList.length > 0 ? (

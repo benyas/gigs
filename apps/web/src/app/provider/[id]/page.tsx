@@ -20,7 +20,10 @@ export default function ProviderProfilePage() {
 
   useEffect(() => {
     profileApi.provider(providerId)
-      .then(setProvider)
+      .then((data) => {
+        setProvider(data);
+        document.title = `${data.profile?.name || 'Prestataire'} | Gigs.ma`;
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [providerId]);

@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Politique de Confidentialite',
+  description: 'Politique de confidentialite de Gigs.ma. Comment nous protegeons vos donnees personnelles.',
+};
+
 export default function PrivacyPage() {
   return (
     <section className="section">

@@ -100,6 +100,7 @@ export default function DashboardPage() {
           <Link href="/dashboard/messages" className="btn btn-outline btn-sm">Messages</Link>
           <Link href="/dashboard/my-bookings" className="btn btn-outline btn-sm">Mes réservations</Link>
           {isProvider && <Link href="/dashboard/gigs" className="btn btn-outline btn-sm">Mes services</Link>}
+          {isProvider && <Link href="/dashboard/analytics" className="btn btn-outline btn-sm">Statistiques</Link>}
           <Link href="/dashboard/settings" className="btn btn-outline btn-sm">Paramètres</Link>
         </div>
 

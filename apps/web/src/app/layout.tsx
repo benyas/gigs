@@ -6,9 +6,21 @@ import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
 import { AuthProvider } from '@/lib/auth-context';
 
 export const metadata: Metadata = {
-  title: 'Gigs.ma - Services à domicile au Maroc',
+  title: {
+    default: 'Gigs.ma - Services a domicile au Maroc',
+    template: '%s | Gigs.ma',
+  },
   description:
-    'Trouvez les meilleurs prestataires de services près de chez vous. Plomberie, électricité, ménage, déménagement et plus.',
+    'Trouvez les meilleurs prestataires de services pres de chez vous. Plomberie, electricite, menage, demenagement et plus.',
+  keywords: ['services', 'prestataires', 'Maroc', 'plombier', 'electricien', 'menage', 'reparation', 'demenagement'],
+  openGraph: {
+    type: 'website',
+    locale: 'fr_MA',
+    siteName: 'Gigs.ma',
+    title: 'Gigs.ma - Services a domicile au Maroc',
+    description: 'Trouvez les meilleurs prestataires de services pres de chez vous au Maroc.',
+  },
+  robots: { index: true, follow: true },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

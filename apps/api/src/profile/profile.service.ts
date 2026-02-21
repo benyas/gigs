@@ -84,4 +84,61 @@ export class ProfileService {
       memberSince: user.createdAt,
     };
   }
+
+  async getProviderStats(providerId: string) {
+    const [
+      totalGigs,
+      activeGigs,
+      bookings,
+      completedBookings,
+      pendingBookings,
+      reviews,
+    ] = await Promise.all([
+      this.prisma.gig.count({ where: { providerId } }),
+      this.prisma.gig.count({ where: { providerId, status: 'active' } }),
+      this.prisma.booking.count({ where: { gig: { providerId } } }),
+      this.prisma.booking.count({ where: { gig: { providerId }, status: 'completed' } }),
+      this.prisma.booking.count({ where: { gig: { providerId }, status: 'pending' } }),
+      this.prisma.review.count({ where: { providerId } }),
+    ]);
+
+    const earnings = await this.prisma.booking.aggregate({
+      where: { gig: { providerId }, status: 'completed' },
+      _sum: { totalPrice: true },
+    });
+
+    const monthlyEarnings = await this.prisma.booking.aggregate({
+      where: {
+        gig: { providerId },
+        status: 'completed',
+        updatedAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+      },
+      _sum: { totalPrice: true },
+    });
+
+    const recentBookings = await this.prisma.booking.findMany({
+      where: { gig: { providerId } },
+      include: {
+        gig: true,
+        client: { include: { profile: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId: providerId },
+    });
+
+    return {
+      gigs: { total: totalGigs, active: activeGigs },
+      bookings: { total: bookings, completed: completedBookings, pending: pendingBookings },
+      reviews: { total: reviews, avgRating: profile?.ratingAvg || 0 },
+      earnings: {
+        total: earnings._sum.totalPrice || 0,
+        thisMonth: monthlyEarnings._sum.totalPrice || 0,
+      },
+      recentBookings,
+    };
+  }
 }

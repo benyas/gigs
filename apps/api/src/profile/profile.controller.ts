@@ -28,4 +28,10 @@ export class ProfileController {
   getProviderProfile(@Param('id') providerId: string) {
     return this.profileService.getProviderPublicProfile(providerId);
   }
+
+  @Get('stats')
+  @UseGuards(AuthGuard('jwt'))
+  getProviderStats(@CurrentUser('id') userId: string) {
+    return this.profileService.getProviderStats(userId);
+  }
 }

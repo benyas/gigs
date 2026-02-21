@@ -18,8 +18,17 @@ export class GigsService {
     @InjectQueue('gig-indexing') private indexQueue: Queue,
   ) {}
 
+  private getSortOrder(sort?: string): Record<string, string>[] {
+    switch (sort) {
+      case 'price_asc': return [{ basePrice: 'asc' }];
+      case 'price_desc': return [{ basePrice: 'desc' }];
+      case 'rating': return [{ provider: { profile: { ratingAvg: 'desc' } } } as any];
+      default: return [{ createdAt: 'desc' }];
+    }
+  }
+
   async findAll(filters: GigFiltersInput) {
-    const { categoryId, cityId, minPrice, maxPrice, q, page, perPage } = filters;
+    const { categoryId, cityId, minPrice, maxPrice, q, sort, page, perPage } = filters;
 
     // Use Meilisearch when there's a text query
     if (q) {
@@ -35,6 +44,8 @@ export class GigsService {
       if (maxPrice) (where.basePrice as Record<string, number>).lte = maxPrice;
     }
 
+    const orderBy = this.getSortOrder(sort);
+
     const [data, total] = await Promise.all([
       this.prisma.gig.findMany({
         where,
@@ -44,7 +55,7 @@ export class GigsService {
           city: true,
           media: { orderBy: { sortOrder: 'asc' }, take: 1 },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip: (page - 1) * perPage,
         take: perPage,
       }),

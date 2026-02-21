@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const faqs = [
@@ -80,6 +80,8 @@ const faqs = [
 
 export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState<string | null>(null);
+
+  useEffect(() => { document.title = 'FAQ | Gigs.ma'; }, []);
 
   function toggle(key: string) {
     setOpenIndex(openIndex === key ? null : key);

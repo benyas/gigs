@@ -40,6 +40,7 @@ export const gigFiltersSchema = z.object({
   minPrice: z.coerce.number().optional(),
   maxPrice: z.coerce.number().optional(),
   q: z.string().optional(),
+  sort: z.enum(['recent', 'price_asc', 'price_desc', 'rating']).optional(),
   page: z.coerce.number().int().positive().default(1),
   perPage: z.coerce.number().int().positive().max(50).default(20),
 });

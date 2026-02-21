@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'A propos',
+  description: 'Decouvrez Gigs.ma, la plateforme de services a domicile au Maroc. Notre mission est de connecter clients et prestataires.',
+};
 
 export default function AboutPage() {
   return (
