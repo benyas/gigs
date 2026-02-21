@@ -160,7 +160,7 @@ img { max-width: 100%; display: block; }
   align-items: center;
 }
 
-.nav-links a {
+.nav-links a:not(.btn) {
   color: var(--gray-600);
   font-weight: 500;
   font-size: 0.9rem;
@@ -168,7 +168,7 @@ img { max-width: 100%; display: block; }
   border-radius: var(--radius);
   transition: all var(--transition-fast);
 }
-.nav-links a:hover {
+.nav-links a:not(.btn):hover {
   color: var(--primary);
   background: var(--primary-50);
   text-decoration: none;
@@ -853,10 +853,14 @@ select.form-input {
     gap: 0.25rem;
     z-index: 49;
   }
-  .nav-links.open a {
+  .nav-links.open a:not(.btn) {
     padding: 0.75rem 1rem;
     width: 100%;
     border-radius: var(--radius);
+  }
+  .nav-links.open .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .mobile-toggle { display: flex; align-items: center; justify-content: center; }
