@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, useRef, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -9,7 +9,10 @@ import { profile as profileApi, cities as citiesApi } from '@/lib/api';
 export default function SettingsPage() {
   const { user, token, loading, login } = useAuth();
   const router = useRouter();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ name: '', bio: '', phone: '', cityId: '' });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [cities, setCities] = useState<any[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -30,12 +33,30 @@ export default function SettingsPage() {
         phone: profileData.phone || '',
         cityId: profileData.profile?.cityId || '',
       });
+      setAvatarUrl(profileData.profile?.avatarUrl || null);
       setCities(cityList);
     }).catch(() => {}).finally(() => setPageLoading(false));
   }, [user, token, loading, router]);
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !token) return;
+    setAvatarUploading(true);
+    setError('');
+    try {
+      const updated = await profileApi.uploadAvatar(file, token);
+      setAvatarUrl(updated.profile?.avatarUrl || null);
+      login(token, updated);
+      setSuccess('Photo de profil mise a jour !');
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de l\'upload');
+    } finally {
+      setAvatarUploading(false);
+    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -52,11 +73,10 @@ export default function SettingsPage() {
       if (form.cityId) data.cityId = form.cityId;
 
       const updated = await profileApi.update(data, token!);
-      // Update auth context with fresh profile data
       login(token!, updated);
-      setSuccess('Profil mis à jour !');
+      setSuccess('Profil mis a jour !');
     } catch (err: any) {
-      setError(err.message || 'Erreur lors de la mise à jour');
+      setError(err.message || 'Erreur lors de la mise a jour');
     } finally {
       setSaving(false);
     }
@@ -70,6 +90,8 @@ export default function SettingsPage() {
     );
   }
 
+  const initials = form.name ? form.name.charAt(0).toUpperCase() : '?';
+
   return (
     <section className="section">
       <div className="container" style={{ maxWidth: 600 }}>
@@ -78,10 +100,57 @@ export default function SettingsPage() {
         </div>
         <div className="card">
           <div className="card-body" style={{ padding: '2rem' }}>
-            <h1 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Paramètres du profil</h1>
+            <h1 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Parametres du profil</h1>
 
             {error && <div className="alert alert-error">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
+
+            {/* Avatar upload */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div
+                onClick={() => avatarInputRef.current?.click()}
+                style={{
+                  width: 80, height: 80, borderRadius: '50%', cursor: 'pointer',
+                  overflow: 'hidden', flexShrink: 0, position: 'relative',
+                  background: avatarUrl ? `url(${avatarUrl}) center/cover` : 'linear-gradient(135deg, #059669, #047857)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontSize: '2rem', fontWeight: 700,
+                  border: '3px solid var(--border)',
+                }}
+              >
+                {!avatarUrl && initials}
+                {avatarUploading && (
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'rgba(0,0,0,0.5)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontSize: '0.75rem',
+                  }}>
+                    ...
+                  </div>
+                )}
+              </div>
+              <div>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarUploading}
+                >
+                  {avatarUploading ? 'Upload...' : 'Changer la photo'}
+                </button>
+                <p style={{ color: '#9ca3af', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                  JPEG, PNG ou WebP, max 5 Mo
+                </p>
+              </div>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+              />
+            </div>
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -101,12 +170,12 @@ export default function SettingsPage() {
                   className="form-input"
                   value={form.bio}
                   onChange={(e) => update('bio', e.target.value)}
-                  placeholder="Décrivez-vous en quelques mots..."
+                  placeholder="Decrivez-vous en quelques mots..."
                   rows={4}
                 />
               </div>
               <div className="form-group">
-                <label>Téléphone</label>
+                <label>Telephone</label>
                 <input
                   type="tel"
                   className="form-input"
@@ -123,7 +192,7 @@ export default function SettingsPage() {
                   value={form.cityId}
                   onChange={(e) => update('cityId', e.target.value)}
                 >
-                  <option value="">Sélectionner une ville</option>
+                  <option value="">Selectionner une ville</option>
                   {cities.map((city) => (
                     <option key={city.id} value={city.id}>{city.name}</option>
                   ))}

@@ -57,6 +57,28 @@ export class ReviewsService {
     return review;
   }
 
+  async reply(reviewId: string, providerId: string, reply: string) {
+    const review = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+    });
+
+    if (!review) throw new NotFoundException('Review not found');
+    if (review.providerId !== providerId) throw new ForbiddenException();
+    if (review.providerReply) throw new BadRequestException('Already replied to this review');
+
+    return this.prisma.review.update({
+      where: { id: reviewId },
+      data: {
+        providerReply: reply,
+        providerReplyAt: new Date(),
+      },
+      include: {
+        client: { include: { profile: true } },
+        booking: { include: { gig: true } },
+      },
+    });
+  }
+
   async findForProvider(providerId: string, page: number, perPage: number) {
     const where = { providerId };
 

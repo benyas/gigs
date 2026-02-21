@@ -199,6 +199,14 @@ export default function GigDetailPage() {
                         </span>
                       </div>
                       <p style={{ lineHeight: 1.6 }}>{review.comment}</p>
+                      {review.providerReply && (
+                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f0fdf4', borderRadius: 8, borderLeft: '3px solid var(--primary)' }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '0.25rem' }}>
+                            Reponse du prestataire
+                          </div>
+                          <p style={{ fontSize: '0.9rem', lineHeight: 1.6 }}>{review.providerReply}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -16,6 +16,7 @@ import { ProfileModule } from './profile/profile.module';
 import { AdminModule } from './admin/admin.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AvailabilityModule } from './availability/availability.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     AdminModule,
     MessagingModule,
     NotificationsModule,
+    AvailabilityModule,
   ],
   providers: [
     {

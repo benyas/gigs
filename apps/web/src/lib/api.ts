@@ -81,6 +81,8 @@ export const gigs = {
   },
   deleteMedia: (gigId: string, mediaId: string, token: string) =>
     apiFetch<any>(`/gigs/${gigId}/media/${mediaId}`, { method: 'DELETE', token }),
+  suggestions: (q: string) =>
+    apiFetch<any[]>(`/gigs/suggestions?q=${encodeURIComponent(q)}`),
 };
 
 // Bookings
@@ -95,6 +97,12 @@ export const bookings = {
       body: JSON.stringify({ status }),
       token,
     }),
+  cancel: (id: string, reason: string, token: string) =>
+    apiFetch<any>(`/bookings/${id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+      token,
+    }),
 };
 
 // Reviews
@@ -103,6 +111,8 @@ export const reviews = {
     apiFetch<{ data: any[]; meta: any }>(`/reviews/provider/${providerId}?page=${page}`),
   create: (data: any, token: string) =>
     apiFetch<any>('/reviews', { method: 'POST', body: JSON.stringify(data), token }),
+  reply: (reviewId: string, reply: string, token: string) =>
+    apiFetch<any>(`/reviews/${reviewId}/reply`, { method: 'PATCH', body: JSON.stringify({ reply }), token }),
 };
 
 // Profile
@@ -112,6 +122,19 @@ export const profile = {
     apiFetch<any>('/profile', { method: 'PATCH', body: JSON.stringify(data), token }),
   provider: (id: string) => apiFetch<any>(`/profile/provider/${id}`),
   stats: (token: string) => apiFetch<any>('/profile/stats', { token }),
+  uploadAvatar: (file: File, token: string) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return apiUpload<any>('/profile/avatar', fd, token);
+  },
+};
+
+// Availability
+export const availability = {
+  get: (token: string) => apiFetch<any[]>('/availability', { token }),
+  update: (slots: any[], token: string) =>
+    apiFetch<any[]>('/availability', { method: 'PUT', body: JSON.stringify({ slots }), token }),
+  provider: (id: string) => apiFetch<any[]>(`/availability/provider/${id}`),
 };
 
 // Admin

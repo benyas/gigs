@@ -1,5 +1,6 @@
-import { Controller, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Param, Body, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ProfileService } from './profile.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
@@ -22,6 +23,27 @@ export class ProfileController {
     @Body(new ZodValidationPipe(updateProfileSchema)) body: UpdateProfileInput,
   ) {
     return this.profileService.updateProfile(userId, body);
+  }
+
+  @Post('avatar')
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new Error('Only JPEG, PNG, and WebP images are allowed'), false);
+        }
+      },
+    }),
+  )
+  uploadAvatar(
+    @CurrentUser('id') userId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.profileService.uploadAvatar(userId, file);
   }
 
   @Get('provider/:id')

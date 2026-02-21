@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { bookings as bookingsApi } from '@/lib/api';
+import { bookings as bookingsApi, reviews as reviewsApi } from '@/lib/api';
 import { ReviewForm } from '@/components/ReviewForm';
 
 export default function MyBookingsPage() {
@@ -13,6 +13,9 @@ export default function MyBookingsPage() {
   const [myBookings, setMyBookings] = useState<any[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [replyingId, setReplyingId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replySubmitting, setReplySubmitting] = useState(false);
 
   function loadBookings() {
     if (!token) return;
@@ -29,12 +32,29 @@ export default function MyBookingsPage() {
   }, [user, token, loading, router]);
 
   async function handleCancel(bookingId: string) {
-    if (!token || !confirm('Annuler cette réservation ?')) return;
+    if (!token) return;
+    const reason = prompt('Raison de l\'annulation (optionnel) :');
+    if (reason === null) return; // User pressed Cancel in prompt
     try {
-      await bookingsApi.updateStatus(bookingId, 'cancelled', token);
+      await bookingsApi.cancel(bookingId, reason, token);
       loadBookings();
     } catch (err: any) {
       alert(err.message || 'Erreur');
+    }
+  }
+
+  async function handleReply(reviewId: string) {
+    if (!token || !replyText.trim()) return;
+    setReplySubmitting(true);
+    try {
+      await reviewsApi.reply(reviewId, replyText.trim(), token);
+      setReplyingId(null);
+      setReplyText('');
+      loadBookings();
+    } catch (err: any) {
+      alert(err.message || 'Erreur');
+    } finally {
+      setReplySubmitting(false);
     }
   }
 
@@ -142,10 +162,58 @@ export default function MyBookingsPage() {
                     </div>
                   </div>
 
+                  {booking.status === 'cancelled' && booking.cancelReason && (
+                    <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#fef2f2', borderRadius: '8px', fontSize: '0.85rem', color: '#991b1b' }}>
+                      Raison de l&apos;annulation : {booking.cancelReason}
+                    </div>
+                  )}
+
                   {booking.review && (
                     <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f9fafb', borderRadius: '8px' }}>
                       <span className="stars">{'★'.repeat(booking.review.rating)}{'☆'.repeat(5 - booking.review.rating)}</span>
                       <p style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>{booking.review.comment}</p>
+
+                      {booking.review.providerReply && (
+                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f0fdf4', borderRadius: 8, borderLeft: '3px solid var(--primary)' }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '0.25rem' }}>Votre reponse</div>
+                          <p style={{ fontSize: '0.85rem' }}>{booking.review.providerReply}</p>
+                        </div>
+                      )}
+
+                      {!isClient && !booking.review.providerReply && replyingId !== booking.review.id && (
+                        <button
+                          className="btn btn-outline btn-sm"
+                          style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}
+                          onClick={() => { setReplyingId(booking.review.id); setReplyText(''); }}
+                        >
+                          Repondre a cet avis
+                        </button>
+                      )}
+
+                      {replyingId === booking.review.id && (
+                        <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
+                          <input
+                            className="form-input"
+                            placeholder="Votre reponse..."
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            style={{ flex: 1 }}
+                          />
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleReply(booking.review.id)}
+                            disabled={replySubmitting || !replyText.trim()}
+                          >
+                            {replySubmitting ? '...' : 'Envoyer'}
+                          </button>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => setReplyingId(null)}
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 

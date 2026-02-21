@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { GigCard } from '@/components/GigCard';
+import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { gigs, categories as categoriesApi, cities as citiesApi } from '@/lib/api';
 import Link from 'next/link';
 
@@ -63,9 +64,8 @@ export default async function BrowsePage({ searchParams }: Props) {
             Trouvez le service ideal
           </h1>
           <form action="/browse" method="GET" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <input
+            <SearchAutocomplete
               name="q"
-              type="text"
               placeholder="Que recherchez-vous ? (plombier, electricien, menage...)"
               className="form-input"
               style={{ flex: '2 1 250px', borderColor: 'transparent' }}

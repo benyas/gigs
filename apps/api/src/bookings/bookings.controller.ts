@@ -51,4 +51,13 @@ export class BookingsController {
   ) {
     return this.bookingsService.updateStatus(id, userId, body.status);
   }
+
+  @Post(':id/cancel')
+  cancel(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: { reason?: string },
+  ) {
+    return this.bookingsService.cancel(id, userId, body.reason);
+  }
 }

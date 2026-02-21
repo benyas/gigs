@@ -90,9 +90,11 @@ export class BookingsService {
       throw new ForbiddenException('Only the provider can perform this action');
     }
 
+    const updateData: Record<string, unknown> = { status: status as any };
+
     const updated = await this.prisma.booking.update({
       where: { id: bookingId },
-      data: { status: status as any },
+      data: updateData,
       include: {
         gig: { include: { provider: { include: { profile: true } } } },
         client: { include: { profile: true } },
@@ -102,6 +104,44 @@ export class BookingsService {
     await this.notifQueue.add('booking-status-changed', {
       bookingId: updated.id,
       status,
+    });
+
+    return updated;
+  }
+
+  async cancel(bookingId: string, userId: string, reason?: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { gig: true },
+    });
+
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    const isProvider = booking.gig.providerId === userId;
+    const isClient = booking.clientId === userId;
+    if (!isProvider && !isClient) throw new ForbiddenException();
+
+    if (!['pending', 'accepted'].includes(booking.status)) {
+      throw new BadRequestException('Cannot cancel a booking that is already ' + booking.status);
+    }
+
+    const updated = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        status: 'cancelled',
+        cancelReason: reason || null,
+        cancelledBy: userId,
+        cancelledAt: new Date(),
+      },
+      include: {
+        gig: { include: { provider: { include: { profile: true } } } },
+        client: { include: { profile: true } },
+      },
+    });
+
+    await this.notifQueue.add('booking-status-changed', {
+      bookingId: updated.id,
+      status: 'cancelled',
     });
 
     return updated;

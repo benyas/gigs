@@ -149,6 +149,30 @@ export class GigsService {
     }
   }
 
+  async suggestions(q: string) {
+    if (!q || q.length < 2) return [];
+
+    const gigs = await this.prisma.gig.findMany({
+      where: {
+        status: 'active',
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { category: { name: { contains: q, mode: 'insensitive' } } },
+        ],
+      },
+      select: { title: true, slug: true, category: { select: { name: true } }, city: { select: { name: true } } },
+      take: 8,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return gigs.map((g) => ({
+      title: g.title,
+      slug: g.slug,
+      category: g.category?.name,
+      city: g.city?.name,
+    }));
+  }
+
   async findByProvider(providerId: string) {
     const data = await this.prisma.gig.findMany({
       where: { providerId },

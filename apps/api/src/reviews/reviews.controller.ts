@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Param,
   Body,
   Query,
@@ -41,5 +42,15 @@ export class ReviewsController {
     @Body(new ZodValidationPipe(createReviewSchema)) body: CreateReviewInput,
   ) {
     return this.reviewsService.create(userId, body);
+  }
+
+  @Patch(':id/reply')
+  @UseGuards(AuthGuard('jwt'))
+  reply(
+    @Param('id') reviewId: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: { reply: string },
+  ) {
+    return this.reviewsService.reply(reviewId, userId, body.reply);
   }
 }

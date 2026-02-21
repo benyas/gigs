@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { GigCard } from '@/components/GigCard';
+import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { gigs, categories as categoriesApi, cities as citiesApi } from '@/lib/api';
 
 export default async function HomePage() {
@@ -34,9 +35,8 @@ export default async function HomePage() {
             display: 'flex', gap: '0.5rem', justifyContent: 'center',
             flexWrap: 'wrap', marginTop: '1.5rem', maxWidth: 650, marginLeft: 'auto', marginRight: 'auto',
           }}>
-            <input
+            <SearchAutocomplete
               name="q"
-              type="text"
               placeholder="Quel service cherchez-vous ?"
               className="form-input"
               style={{ flex: '2 1 200px', borderColor: 'transparent', fontSize: '1rem' }}

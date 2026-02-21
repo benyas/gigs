@@ -39,6 +39,11 @@ export class GigsController {
     return this.gigsService.findAll(filters);
   }
 
+  @Get('suggestions')
+  suggestions(@Query('q') q: string) {
+    return this.gigsService.suggestions(q || '');
+  }
+
   @Get('mine')
   @UseGuards(AuthGuard('jwt'))
   findMine(@CurrentUser('id') userId: string) {

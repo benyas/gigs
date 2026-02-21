@@ -47,6 +47,7 @@ model User {
   providerConversations Conversation[] @relation("ProviderConversations")
   sentMessages    Message[]       @relation("SentMessages")
   notifications   Notification[]
+  availability    Availability[]
 
   @@index([role])
   @@index([createdAt])
@@ -136,16 +137,19 @@ model GigMedia {
 }
 
 model Booking {
-  id          String        @id @default(uuid()) @db.Uuid
-  gigId       String        @map("gig_id") @db.Uuid
-  clientId    String        @map("client_id") @db.Uuid
-  scheduledAt DateTime      @map("scheduled_at")
-  address     String
-  notes       String?       @db.Text
-  status      BookingStatus @default(pending)
-  totalPrice  Float         @map("total_price")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  id           String        @id @default(uuid()) @db.Uuid
+  gigId        String        @map("gig_id") @db.Uuid
+  clientId     String        @map("client_id") @db.Uuid
+  scheduledAt  DateTime      @map("scheduled_at")
+  address      String
+  notes        String?       @db.Text
+  status       BookingStatus @default(pending)
+  totalPrice   Float         @map("total_price")
+  cancelReason String?       @map("cancel_reason") @db.Text
+  cancelledBy  String?       @map("cancelled_by") @db.Uuid
+  cancelledAt  DateTime?     @map("cancelled_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
 
   gig          Gig           @relation(fields: [gigId], references: [id])
   client       User          @relation("ClientBookings", fields: [clientId], references: [id])
@@ -160,13 +164,15 @@ model Booking {
 }
 
 model Review {
-  id         String   @id @default(uuid()) @db.Uuid
-  bookingId  String   @unique @map("booking_id") @db.Uuid
-  clientId   String   @map("client_id") @db.Uuid
-  providerId String   @map("provider_id") @db.Uuid
-  rating     Int
-  comment    String   @db.Text
-  createdAt  DateTime @default(now()) @map("created_at")
+  id              String   @id @default(uuid()) @db.Uuid
+  bookingId       String   @unique @map("booking_id") @db.Uuid
+  clientId        String   @map("client_id") @db.Uuid
+  providerId      String   @map("provider_id") @db.Uuid
+  rating          Int
+  comment         String   @db.Text
+  providerReply   String?  @map("provider_reply") @db.Text
+  providerReplyAt DateTime? @map("provider_reply_at")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   booking  Booking @relation(fields: [bookingId], references: [id])
   client   User    @relation("ReviewsGiven", fields: [clientId], references: [id])
@@ -230,4 +236,19 @@ model Notification {
   @@index([userId, isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model Availability {
+  id         String @id @default(uuid()) @db.Uuid
+  providerId String @map("provider_id") @db.Uuid
+  dayOfWeek  Int    @map("day_of_week") // 0=Sunday, 6=Saturday
+  startTime  String @map("start_time")  // "09:00"
+  endTime    String @map("end_time")    // "18:00"
+  isActive   Boolean @default(true) @map("is_active")
+
+  provider User @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, dayOfWeek])
+  @@index([providerId])
+  @@map("availabilities")
 }
