@@ -56,6 +56,7 @@ export const gigs = {
     return apiFetch<{ data: any[]; meta: any }>(`/gigs${query}`);
   },
   getBySlug: (slug: string) => apiFetch<any>(`/gigs/${slug}`),
+  mine: (token: string) => apiFetch<any[]>('/gigs/mine', { token }),
   create: (data: any, token: string) =>
     apiFetch<any>('/gigs', { method: 'POST', body: JSON.stringify(data), token }),
 };

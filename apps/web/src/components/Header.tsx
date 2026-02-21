@@ -1,8 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth-context';
 
 export function Header() {
+  const { user, loading, logout } = useAuth();
+
   return (
     <header className="header">
       <div className="container">
@@ -11,12 +14,39 @@ export function Header() {
         </Link>
         <nav className="nav-links">
           <Link href="/browse">Parcourir</Link>
-          <Link href="/auth/login" className="btn btn-outline btn-sm">
-            Connexion
-          </Link>
-          <Link href="/auth/register" className="btn btn-primary btn-sm">
-            Inscription
-          </Link>
+          {!loading && (
+            <>
+              {user ? (
+                <>
+                  {user.role === 'provider' && (
+                    <Link href="/dashboard">Tableau de bord</Link>
+                  )}
+                  {user.role === 'provider' && (
+                    <Link href="/create-gig" className="btn btn-primary btn-sm">
+                      + Proposer
+                    </Link>
+                  )}
+                  <Link href="/dashboard/bookings">Réservations</Link>
+                  <button
+                    onClick={logout}
+                    className="btn btn-outline btn-sm"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {user.profile?.name?.split(' ')[0] || 'Déconnexion'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/login" className="btn btn-outline btn-sm">
+                    Connexion
+                  </Link>
+                  <Link href="/auth/register" className="btn btn-primary btn-sm">
+                    Inscription
+                  </Link>
+                </>
+              )}
+            </>
+          )}
         </nav>
       </div>
     </header>

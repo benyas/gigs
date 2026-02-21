@@ -67,6 +67,53 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: gigs-api
+    restart: unless-stopped
+    ports:
+      - '4000:4000'
+    environment:
+      DATABASE_URL: postgresql://gigs:gigs_secret@postgres:5432/gigs_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MEILISEARCH_HOST: http://meilisearch:7700
+      MEILISEARCH_KEY: gigs_master_key
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: gigs_minio
+      S3_SECRET_KEY: gigs_minio_secret
+      S3_BUCKET: gigs-uploads
+      S3_REGION: us-east-1
+      JWT_SECRET: dev-jwt-secret-change-in-prod
+      API_PORT: 4000
+      WEB_URL: http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    profiles:
+      - full
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: gigs-web
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    depends_on:
+      - api
+    profiles:
+      - full
+
 volumes:
   postgres-data:
   redis-data:

@@ -2,9 +2,13 @@
 
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { login } = useAuth();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -26,9 +30,8 @@ export default function RegisterPage() {
 
     try {
       const result = await auth.register(form);
-      localStorage.setItem('token', result.token);
-      localStorage.setItem('user', JSON.stringify(result.user));
-      window.location.href = '/';
+      login(result.token, result.user);
+      router.push('/');
     } catch (err: any) {
       setError(err.message || 'Échec de l\'inscription');
     } finally {

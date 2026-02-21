@@ -16,6 +16,8 @@
     "search:sync": "tsx src/scripts/sync-meilisearch.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.995.0",
+    "@aws-sdk/s3-request-presigner": "^3.995.0",
     "@gigs/shared": "workspace:*",
     "@nestjs/bullmq": "^10.2.0",
     "@nestjs/common": "^10.4.0",
@@ -31,6 +33,7 @@
     "class-validator": "^0.14.1",
     "ioredis": "^5.4.0",
     "meilisearch": "^0.43.0",
+    "multer": "^2.0.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
@@ -43,6 +46,7 @@
     "@nestjs/schematics": "^10.1.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.6",
+    "@types/multer": "^2.0.0",
     "@types/node": "^22.0.0",
     "@types/passport-jwt": "^4.0.1",
     "prisma": "^5.20.0",

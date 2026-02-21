@@ -2,9 +2,13 @@
 
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,9 +21,8 @@ export default function LoginPage() {
 
     try {
       const result = await auth.login(email, password);
-      localStorage.setItem('token', result.token);
-      localStorage.setItem('user', JSON.stringify(result.user));
-      window.location.href = '/';
+      login(result.token, result.user);
+      router.push('/');
     } catch (err: any) {
       setError(err.message || 'Échec de la connexion');
     } finally {

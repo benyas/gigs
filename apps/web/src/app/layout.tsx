@@ -3,6 +3,7 @@ import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
+import { AuthProvider } from '@/lib/auth-context';
 
 export const metadata: Metadata = {
   title: 'Gigs.ma - Services à domicile au Maroc',
@@ -31,10 +32,12 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body>
-        <Header />
-        <main>{children}</main>
-        <Footer />
-        <ServiceWorkerRegistrar />
+        <AuthProvider>
+          <Header />
+          <main>{children}</main>
+          <Footer />
+          <ServiceWorkerRegistrar />
+        </AuthProvider>
       </body>
     </html>
   );
