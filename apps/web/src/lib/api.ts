@@ -59,6 +59,8 @@ export const gigs = {
   mine: (token: string) => apiFetch<any[]>('/gigs/mine', { token }),
   create: (data: any, token: string) =>
     apiFetch<any>('/gigs', { method: 'POST', body: JSON.stringify(data), token }),
+  update: (id: string, data: any, token: string) =>
+    apiFetch<any>(`/gigs/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
 };
 
 // Bookings
@@ -81,4 +83,11 @@ export const reviews = {
     apiFetch<{ data: any[]; meta: any }>(`/reviews/provider/${providerId}?page=${page}`),
   create: (data: any, token: string) =>
     apiFetch<any>('/reviews', { method: 'POST', body: JSON.stringify(data), token }),
+};
+
+// Profile
+export const profile = {
+  get: (token: string) => apiFetch<any>('/profile', { token }),
+  update: (data: any, token: string) =>
+    apiFetch<any>('/profile', { method: 'PATCH', body: JSON.stringify(data), token }),
 };

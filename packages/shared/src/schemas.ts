@@ -63,6 +63,14 @@ export const createReviewSchema = z.object({
   comment: z.string().min(10).max(2000),
 });
 
+// Profile
+export const updateProfileSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  bio: z.string().max(2000).optional(),
+  phone: z.string().regex(/^\+212[0-9]{9}$/, 'Must be a valid Moroccan phone number (+212XXXXXXXXX)').optional(),
+  cityId: z.string().uuid().optional(),
+});
+
 // Pagination
 export const paginationSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -78,3 +86,4 @@ export type GigFiltersInput = z.infer<typeof gigFiltersSchema>;
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type UpdateBookingStatusInput = z.infer<typeof updateBookingStatusSchema>;
 export type CreateReviewInput = z.infer<typeof createReviewSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

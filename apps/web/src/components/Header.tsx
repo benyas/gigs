@@ -18,21 +18,22 @@ export function Header() {
             <>
               {user ? (
                 <>
-                  {user.role === 'provider' && (
-                    <Link href="/dashboard">Tableau de bord</Link>
-                  )}
+                  <Link href="/dashboard">Tableau de bord</Link>
                   {user.role === 'provider' && (
                     <Link href="/create-gig" className="btn btn-primary btn-sm">
                       + Proposer
                     </Link>
                   )}
-                  <Link href="/dashboard/bookings">Réservations</Link>
+                  <Link href="/dashboard/my-bookings">Réservations</Link>
+                  <Link href="/dashboard/settings" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    {user.profile?.name?.split(' ')[0] || 'Profil'}
+                  </Link>
                   <button
                     onClick={logout}
                     className="btn btn-outline btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
-                    {user.profile?.name?.split(' ')[0] || 'Déconnexion'}
+                    Déconnexion
                   </button>
                 </>
               ) : (

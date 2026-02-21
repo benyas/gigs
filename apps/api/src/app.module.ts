@@ -12,6 +12,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { MeilisearchModule } from './meilisearch/meilisearch.module';
 import { BullmqModule } from './bullmq/bullmq.module';
 import { StorageModule } from './storage/storage.module';
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { StorageModule } from './storage/storage.module';
     MeilisearchModule,
     BullmqModule,
     StorageModule,
+    ProfileModule,
   ],
   providers: [
     {

@@ -66,6 +66,9 @@ export default function MyGigsPage() {
                     <span className={`badge ${gig.status === 'active' ? 'badge-green' : 'badge-yellow'}`}>
                       {gig.status}
                     </span>
+                    <Link href={`/dashboard/gigs/${gig.id}/edit`} className="btn btn-outline btn-sm" style={{ fontSize: '0.8rem' }}>
+                      Modifier
+                    </Link>
                   </div>
                 </div>
               </div>
