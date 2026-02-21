@@ -14,6 +14,8 @@ import { BullmqModule } from './bullmq/bullmq.module';
 import { StorageModule } from './storage/storage.module';
 import { ProfileModule } from './profile/profile.module';
 import { AdminModule } from './admin/admin.module';
+import { MessagingModule } from './messaging/messaging.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -47,6 +49,8 @@ import { AdminModule } from './admin/admin.module';
     StorageModule,
     ProfileModule,
     AdminModule,
+    MessagingModule,
+    NotificationsModule,
   ],
   providers: [
     {

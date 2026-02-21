@@ -90,6 +90,7 @@ export const profile = {
   get: (token: string) => apiFetch<any>('/profile', { token }),
   update: (data: any, token: string) =>
     apiFetch<any>('/profile', { method: 'PATCH', body: JSON.stringify(data), token }),
+  provider: (id: string) => apiFetch<any>(`/profile/provider/${id}`),
 };
 
 // Admin
@@ -129,4 +130,34 @@ export const admin = {
     apiFetch<any>(`/admin/cities/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
   deleteCity: (id: string, token: string) =>
     apiFetch<any>(`/admin/cities/${id}`, { method: 'DELETE', token }),
+};
+
+// Messaging
+export const messaging = {
+  conversations: (token: string) =>
+    apiFetch<any[]>('/messaging/conversations', { token }),
+  messages: (conversationId: string, token: string, page = 1) =>
+    apiFetch<any>(`/messaging/conversations/${conversationId}/messages?page=${page}`, { token }),
+  send: (conversationId: string, content: string, token: string) =>
+    apiFetch<any>(`/messaging/conversations/${conversationId}/messages`, {
+      method: 'POST', body: JSON.stringify({ content }), token,
+    }),
+  start: (providerId: string, message: string, token: string, bookingId?: string) =>
+    apiFetch<any>('/messaging/conversations', {
+      method: 'POST', body: JSON.stringify({ providerId, message, bookingId }), token,
+    }),
+  unread: (token: string) =>
+    apiFetch<number>('/messaging/unread', { token }),
+};
+
+// Notifications
+export const notifications = {
+  list: (token: string, page = 1) =>
+    apiFetch<any>(`/notifications?page=${page}`, { token }),
+  unreadCount: (token: string) =>
+    apiFetch<number>('/notifications/unread-count', { token }),
+  markRead: (id: string, token: string) =>
+    apiFetch<any>(`/notifications/${id}/read`, { method: 'PATCH', token }),
+  markAllRead: (token: string) =>
+    apiFetch<any>('/notifications/read-all', { method: 'PATCH', token }),
 };

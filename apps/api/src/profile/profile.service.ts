@@ -50,4 +50,38 @@ export class ProfileService {
 
     return this.getProfile(userId);
   }
+
+  async getProviderPublicProfile(providerId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: providerId },
+      include: {
+        profile: { include: { city: true } },
+        gigs: {
+          where: { status: 'active' },
+          include: { category: true, city: true, media: { take: 1 } },
+          orderBy: { createdAt: 'desc' },
+        },
+        reviewsReceived: {
+          include: {
+            client: { include: { profile: true } },
+            booking: { include: { gig: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        },
+      },
+    });
+
+    if (!user || user.role !== 'provider') {
+      throw new NotFoundException('Prestataire non trouvé');
+    }
+
+    return {
+      id: user.id,
+      profile: user.profile,
+      gigs: user.gigs,
+      reviews: user.reviewsReceived,
+      memberSince: user.createdAt,
+    };
+  }
 }

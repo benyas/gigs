@@ -95,6 +95,14 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* Quick links */}
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+          <Link href="/dashboard/messages" className="btn btn-outline btn-sm">Messages</Link>
+          <Link href="/dashboard/my-bookings" className="btn btn-outline btn-sm">Mes réservations</Link>
+          {isProvider && <Link href="/dashboard/gigs" className="btn btn-outline btn-sm">Mes services</Link>}
+          <Link href="/dashboard/settings" className="btn btn-outline btn-sm">Paramètres</Link>
+        </div>
+
         <div className="grid grid-2">
           {/* Provider: my gigs */}
           {isProvider && (
