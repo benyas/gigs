@@ -22,7 +22,14 @@ export default function LoginPage() {
     try {
       const result = await auth.login(email, password);
       login(result.token, result.user);
-      router.push('/');
+      // Redirect based on role
+      if (result.user.role === 'admin') {
+        router.push('/admin');
+      } else if (result.user.role === 'provider') {
+        router.push('/dashboard');
+      } else {
+        router.push('/');
+      }
     } catch (err: any) {
       setError(err.message || 'Échec de la connexion');
     } finally {
@@ -71,8 +78,29 @@ export default function LoginPage() {
 
             <p style={{ textAlign: 'center', marginTop: '1.5rem', color: '#6b7280' }}>
               Pas encore de compte ?{' '}
-              <Link href="/auth/register">Créer un compte</Link>
+              <Link href="/auth/register">Creer un compte</Link>
             </p>
+
+            {/* Demo accounts */}
+            <div style={{ borderTop: '1px solid #e5e7eb', marginTop: '1.5rem', paddingTop: '1.5rem' }}>
+              <p style={{ fontSize: '0.8rem', color: '#9ca3af', textAlign: 'center', marginBottom: '0.75rem' }}>
+                Comptes demo :
+              </p>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button type="button" className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem' }}
+                  onClick={() => { setEmail('admin@gigs.ma'); setPassword('password123'); }}>
+                  Admin
+                </button>
+                <button type="button" className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem' }}
+                  onClick={() => { setEmail('provider@gigs.ma'); setPassword('password123'); }}>
+                  Prestataire
+                </button>
+                <button type="button" className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem' }}
+                  onClick={() => { setEmail('client@gigs.ma'); setPassword('password123'); }}>
+                  Client
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

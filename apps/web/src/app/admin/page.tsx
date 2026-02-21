@@ -11,15 +11,40 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
   const [dataLoading, setDataLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (loading) return;
-    if (!user || !token || user.role !== 'admin') { router.push('/'); return; }
-    admin.stats(token).then(setStats).catch(() => {}).finally(() => setDataLoading(false));
+    if (!user || !token) {
+      router.push('/auth/login');
+      return;
+    }
+    if (user.role !== 'admin') {
+      router.push('/dashboard');
+      return;
+    }
+    admin.stats(token)
+      .then(setStats)
+      .catch((err) => setError(err.message || 'Erreur de chargement'))
+      .finally(() => setDataLoading(false));
   }, [user, token, loading, router]);
 
   if (loading || dataLoading) {
     return <section className="section"><div className="container" style={{ textAlign: 'center', padding: '4rem' }}>Chargement...</div></section>;
+  }
+
+  if (error) {
+    return (
+      <section className="section">
+        <div className="container" style={{ textAlign: 'center', padding: '4rem' }}>
+          <div className="alert alert-error">{error}</div>
+          <p style={{ marginTop: '1rem', color: '#6b7280' }}>
+            Connectez-vous avec un compte admin pour acceder a cette page.
+          </p>
+          <Link href="/auth/login" className="btn btn-primary" style={{ marginTop: '1rem' }}>Se connecter</Link>
+        </div>
+      </section>
+    );
   }
 
   if (!stats) return null;
