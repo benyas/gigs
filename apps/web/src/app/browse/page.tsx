@@ -44,7 +44,6 @@ export default async function BrowsePage({ searchParams }: Props) {
 
   function buildUrl(overrides: Record<string, string>) {
     const p = { ...params, ...overrides };
-    // Remove empty values
     Object.keys(p).forEach((k) => { if (!p[k]) delete p[k]; });
     const qs = new URLSearchParams(p).toString();
     return `/browse${qs ? '?' + qs : ''}`;
@@ -55,119 +54,127 @@ export default async function BrowsePage({ searchParams }: Props) {
   return (
     <section className="section">
       <div className="container">
-        {/* Search hero */}
+        {/* Search bar */}
         <div style={{
-          background: 'linear-gradient(135deg, #059669, #047857)',
-          borderRadius: 16, padding: '2rem', marginBottom: '2rem', color: '#fff',
+          background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 50%, var(--primary-900) 100%)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '2rem 2rem 1.75rem',
+          marginBottom: '1.75rem',
+          position: 'relative',
+          overflow: 'hidden',
         }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '1rem' }}>
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.06), transparent 50%)',
+            pointerEvents: 'none',
+          }} />
+          <h1 style={{
+            fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.875rem',
+            color: '#fff', position: 'relative',
+          }}>
             Trouvez le service ideal
           </h1>
-          <form action="/browse" method="GET" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <form action="/browse" method="GET" className="search-box" style={{ position: 'relative' }}>
             <SearchAutocomplete
               name="q"
-              placeholder="Que recherchez-vous ? (plombier, electricien, menage...)"
+              placeholder="Que recherchez-vous ?"
               className="form-input"
-              style={{ flex: '2 1 250px', borderColor: 'transparent' }}
+              style={{ flex: '2 1 250px' }}
               defaultValue={searchParams.q || ''}
             />
-            <select name="cityId" className="form-input" style={{ flex: '1 1 150px', borderColor: 'transparent' }} defaultValue={searchParams.cityId || ''}>
+            <select name="cityId" className="form-input"
+              style={{ flex: '1 1 150px' }}
+              defaultValue={searchParams.cityId || ''}>
               <option value="">Toutes les villes</option>
               {cityList.map((c: any) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            <button type="submit" className="btn" style={{ background: '#fff', color: '#059669', fontWeight: 600, flex: '0 0 auto' }}>
+            <button type="submit" className="btn"
+              style={{ background: '#fff', color: 'var(--primary)', fontWeight: 700, flex: '0 0 auto' }}>
               Rechercher
             </button>
           </form>
         </div>
 
         {/* Category chips */}
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-          <Link
-            href="/browse"
-            className={`btn btn-sm ${!searchParams.categoryId ? 'btn-primary' : 'btn-outline'}`}
-          >
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          <Link href="/browse"
+            className={`chip${!searchParams.categoryId ? ' active' : ''}`}>
             Tous
           </Link>
           {cats.map((c: any) => (
             <Link
               key={c.id}
               href={buildUrl({ categoryId: c.id, page: '1' })}
-              className={`btn btn-sm ${searchParams.categoryId === c.id ? 'btn-primary' : 'btn-outline'}`}
+              className={`chip${searchParams.categoryId === c.id ? ' active' : ''}`}
             >
-              {c.icon && <span style={{ marginRight: '0.25rem' }}>{c.icon}</span>}
+              {c.icon && <span>{c.icon}</span>}
               {c.name}
             </Link>
           ))}
         </div>
 
-        {/* Price filter row */}
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center' }}>
-          <form action="/browse" method="GET" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* Preserve existing filters */}
+        {/* Filters row */}
+        <div style={{
+          display: 'flex', gap: '0.75rem', flexWrap: 'wrap',
+          marginBottom: '1.5rem', alignItems: 'center',
+        }}>
+          <form action="/browse" method="GET"
+            style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
             {searchParams.categoryId && <input type="hidden" name="categoryId" value={searchParams.categoryId} />}
             {searchParams.cityId && <input type="hidden" name="cityId" value={searchParams.cityId} />}
             {searchParams.q && <input type="hidden" name="q" value={searchParams.q} />}
             {searchParams.sort && <input type="hidden" name="sort" value={searchParams.sort} />}
-            <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>Prix :</span>
-            <input
-              name="minPrice"
-              type="number"
-              placeholder="Min"
-              className="form-input"
-              style={{ width: 90 }}
-              defaultValue={searchParams.minPrice || ''}
-            />
-            <span style={{ color: '#9ca3af' }}>-</span>
-            <input
-              name="maxPrice"
-              type="number"
-              placeholder="Max"
-              className="form-input"
-              style={{ width: 90 }}
-              defaultValue={searchParams.maxPrice || ''}
-            />
-            <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>MAD</span>
+            <span style={{ color: 'var(--gray-500)', fontSize: '0.85rem', fontWeight: 500 }}>Prix :</span>
+            <input name="minPrice" type="number" placeholder="Min" className="form-input"
+              style={{ width: 85, padding: '0.4rem 0.625rem', fontSize: '0.85rem' }}
+              defaultValue={searchParams.minPrice || ''} />
+            <span style={{ color: 'var(--gray-300)' }}>-</span>
+            <input name="maxPrice" type="number" placeholder="Max" className="form-input"
+              style={{ width: 85, padding: '0.4rem 0.625rem', fontSize: '0.85rem' }}
+              defaultValue={searchParams.maxPrice || ''} />
+            <span style={{ color: 'var(--gray-400)', fontSize: '0.8rem' }}>MAD</span>
             <button type="submit" className="btn btn-outline btn-sm">Appliquer</button>
           </form>
           {hasFilters && (
-            <Link href="/browse" className="btn btn-outline btn-sm" style={{ color: '#ef4444', borderColor: '#fecaca' }}>
+            <Link href="/browse" className="btn btn-sm"
+              style={{ color: 'var(--red-500)', background: 'var(--red-50)', border: '1px solid var(--red-100)' }}>
               Reinitialiser
             </Link>
           )}
         </div>
 
-        {/* Results count + sort */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>
+        {/* Results header */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem',
+        }}>
+          <p style={{ color: 'var(--gray-500)', fontSize: '0.875rem', margin: 0, fontWeight: 500 }}>
             {meta.total} service{meta.total !== 1 ? 's' : ''} trouve{meta.total !== 1 ? 's' : ''}
             {searchParams.q && <> pour &quot;{searchParams.q}&quot;</>}
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>Trier par :</span>
-            <div style={{ display: 'flex', gap: '0.25rem' }}>
-              {[
-                { value: 'recent', label: 'Recents' },
-                { value: 'price_asc', label: 'Prix +' },
-                { value: 'price_desc', label: 'Prix -' },
-                { value: 'rating', label: 'Avis' },
-              ].map((opt) => (
-                <Link
-                  key={opt.value}
-                  href={buildUrl({ sort: opt.value, page: '1' })}
-                  className={`btn btn-sm ${(searchParams.sort || 'recent') === opt.value ? 'btn-primary' : 'btn-outline'}`}
-                  style={{ fontSize: '0.8rem' }}
-                >
-                  {opt.label}
-                </Link>
-              ))}
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+            <span style={{ color: 'var(--gray-400)', fontSize: '0.8rem' }}>Trier :</span>
+            {[
+              { value: 'recent', label: 'Recents' },
+              { value: 'price_asc', label: 'Prix +' },
+              { value: 'price_desc', label: 'Prix -' },
+              { value: 'rating', label: 'Avis' },
+            ].map((opt) => (
+              <Link
+                key={opt.value}
+                href={buildUrl({ sort: opt.value, page: '1' })}
+                className={`chip${(searchParams.sort || 'recent') === opt.value ? ' active' : ''}`}
+                style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }}
+              >
+                {opt.label}
+              </Link>
+            ))}
           </div>
         </div>
 
-        {/* Results grid */}
+        {/* Results */}
         {gigList.length > 0 ? (
           <div className="grid grid-3">
             {gigList.map((gig: any) => (
@@ -175,13 +182,13 @@ export default async function BrowsePage({ searchParams }: Props) {
             ))}
           </div>
         ) : (
-          <div className="card" style={{ marginTop: '1rem' }}>
-            <div className="card-body" style={{ textAlign: 'center', padding: '3rem' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>&#128269;</div>
-              <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Aucun service trouve</p>
-              <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
+          <div className="card">
+            <div className="empty-state">
+              <div className="empty-state-icon">&#128269;</div>
+              <div className="empty-state-title">Aucun service trouve</div>
+              <div className="empty-state-desc">
                 Essayez de modifier vos filtres ou d&apos;elargir votre recherche.
-              </p>
+              </div>
               <Link href="/browse" className="btn btn-primary">Voir tous les services</Link>
             </div>
           </div>
@@ -189,7 +196,7 @@ export default async function BrowsePage({ searchParams }: Props) {
 
         {/* Pagination */}
         {meta.totalPages > 1 && (
-          <div className="pagination" style={{ marginTop: '2rem' }}>
+          <div className="pagination">
             {meta.page > 1 && (
               <Link href={buildUrl({ page: String(meta.page - 1) })} className="btn btn-outline btn-sm">
                 &larr; Precedent
@@ -199,13 +206,7 @@ export default async function BrowsePage({ searchParams }: Props) {
               <Link
                 key={p}
                 href={buildUrl({ page: String(p) })}
-                style={{
-                  padding: '0.5rem 1rem', borderRadius: 8,
-                  background: p === meta.page ? 'var(--primary)' : '#fff',
-                  color: p === meta.page ? '#fff' : 'inherit',
-                  border: '1px solid var(--border)',
-                  textDecoration: 'none',
-                }}
+                className={p === meta.page ? 'active' : ''}
               >
                 {p}
               </Link>

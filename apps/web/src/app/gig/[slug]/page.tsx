@@ -43,15 +43,29 @@ export default function GigDetailPage() {
   }
 
   if (loading) {
-    return <section className="section"><div className="container" style={{ textAlign: 'center', padding: '4rem' }}>Chargement...</div></section>;
+    return (
+      <section className="section">
+        <div className="container" style={{ maxWidth: 1000 }}>
+          <div className="skeleton" style={{ height: 300, marginBottom: '1rem', borderRadius: 'var(--radius-lg)' }} />
+          <div className="skeleton" style={{ height: 24, width: 400, marginBottom: '0.75rem' }} />
+          <div className="skeleton" style={{ height: 16, width: 250 }} />
+        </div>
+      </section>
+    );
   }
 
   if (!gig) {
     return (
       <section className="section">
-        <div className="container" style={{ textAlign: 'center', padding: '4rem' }}>
-          <h1 style={{ marginBottom: '1rem' }}>Service non trouve</h1>
-          <Link href="/browse" className="btn btn-primary">Parcourir les services</Link>
+        <div className="container">
+          <div className="card">
+            <div className="empty-state">
+              <div className="empty-state-icon">&#128533;</div>
+              <div className="empty-state-title">Service non trouve</div>
+              <div className="empty-state-desc">Ce service n&apos;existe pas ou a ete supprime.</div>
+              <Link href="/browse" className="btn btn-primary">Parcourir les services</Link>
+            </div>
+          </div>
         </div>
       </section>
     );
@@ -64,24 +78,37 @@ export default function GigDetailPage() {
   return (
     <section className="section">
       <div className="container" style={{ maxWidth: 1000 }}>
+        {/* Breadcrumb */}
         <div style={{ marginBottom: '1rem' }}>
-          <Link href="/browse" style={{ color: '#6b7280' }}>&larr; Retour aux services</Link>
+          <Link href="/browse" style={{ color: 'var(--gray-400)', fontSize: '0.875rem', display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Retour aux services
+          </Link>
         </div>
 
         <div className="gig-layout">
-          {/* Main content */}
+          {/* Main */}
           <div>
-            <div className="card" style={{ marginBottom: '2rem' }}>
-              {/* Image gallery */}
+            <div className="card" style={{ marginBottom: '1.5rem' }}>
+              {/* Gallery */}
               {hasImages ? (
                 <div>
                   <div style={{
-                    height: 300,
-                    background: `url(${gig.media[activeImage].url}) center/cover`,
-                    borderRadius: '12px 12px 0 0',
-                  }} />
+                    height: 320,
+                    overflow: 'hidden',
+                    position: 'relative',
+                  }}>
+                    <img
+                      src={gig.media[activeImage].url}
+                      alt={gig.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
                   {gig.media.length > 1 && (
-                    <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem', overflowX: 'auto' }}>
+                    <div style={{
+                      display: 'flex', gap: '0.5rem', padding: '0.75rem 1rem',
+                      overflowX: 'auto', background: 'var(--gray-50)',
+                    }}>
                       {gig.media.map((m: any, i: number) => (
                         <img
                           key={m.id}
@@ -89,9 +116,12 @@ export default function GigDetailPage() {
                           alt={`Photo ${i + 1}`}
                           onClick={() => setActiveImage(i)}
                           style={{
-                            width: 60, height: 60, objectFit: 'cover', borderRadius: 6,
-                            cursor: 'pointer', border: i === activeImage ? '2px solid var(--primary)' : '2px solid transparent',
+                            width: 64, height: 64, objectFit: 'cover',
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: 'pointer',
+                            border: `2px solid ${i === activeImage ? 'var(--primary)' : 'transparent'}`,
                             opacity: i === activeImage ? 1 : 0.6,
+                            transition: 'all 150ms ease',
                           }}
                         />
                       ))}
@@ -100,66 +130,73 @@ export default function GigDetailPage() {
                 </div>
               ) : (
                 <div style={{
-                  height: 200,
-                  background: 'linear-gradient(135deg, #d1fae5, #a7f3d0)',
+                  height: 220,
+                  background: 'linear-gradient(135deg, var(--primary-100), var(--primary-200))',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '2rem', color: '#059669', fontWeight: 600,
-                  borderRadius: '12px 12px 0 0',
+                  fontSize: '2rem', color: 'var(--primary)', fontWeight: 600,
                 }}>
                   {gig.category?.name}
                 </div>
               )}
 
-              <div className="card-body" style={{ padding: '2rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+              <div className="card-body" style={{ padding: '1.75rem' }}>
+                {/* Tags */}
+                <div style={{ display: 'flex', gap: '0.375rem', marginBottom: '0.875rem' }}>
                   <span className="badge badge-green">{gig.category?.name}</span>
                   <span className="badge badge-blue">{gig.city?.name}</span>
                 </div>
 
-                <h1 style={{ fontSize: '1.75rem', marginBottom: '1rem' }}>{gig.title}</h1>
+                <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '1rem', letterSpacing: '-0.25px', lineHeight: 1.25 }}>
+                  {gig.title}
+                </h1>
 
+                {/* Provider info */}
                 {gig.provider?.profile && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                    <Link
-                      href={`/provider/${gig.provider.id}`}
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    >
-                      <div style={{
-                        width: 36, height: 36, borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #059669, #047857)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#fff', fontSize: '0.85rem', fontWeight: 700,
-                      }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '0.75rem',
+                    marginBottom: '1.5rem', flexWrap: 'wrap',
+                    padding: '0.875rem 1rem',
+                    background: 'var(--gray-50)', borderRadius: 'var(--radius)',
+                  }}>
+                    <Link href={`/provider/${gig.provider.id}`}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                      <div className="avatar">
                         {gig.provider.profile.name?.charAt(0)?.toUpperCase()}
                       </div>
                       <div>
-                        <strong>{gig.provider.profile.name}</strong>
-                        {gig.provider.profile.isVerified && (
-                          <span style={{ color: 'var(--primary)', marginLeft: '0.25rem' }}>&#10003;</span>
-                        )}
+                        <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+                          {gig.provider.profile.name}
+                          {gig.provider.profile.isVerified && (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--primary)"
+                              style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 4 }}>
+                              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>
+                          <span className="stars">
+                            {'★'.repeat(Math.round(gig.provider.profile.ratingAvg))}
+                            {'☆'.repeat(5 - Math.round(gig.provider.profile.ratingAvg))}
+                          </span>
+                          {' '}({gig.provider.profile.ratingCount} avis)
+                        </div>
                       </div>
                     </Link>
-                    <span className="stars">
-                      {'★'.repeat(Math.round(gig.provider.profile.ratingAvg))}
-                      {'☆'.repeat(5 - Math.round(gig.provider.profile.ratingAvg))}
-                    </span>
-                    <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-                      ({gig.provider.profile.ratingCount} avis)
-                    </span>
 
-                    {/* Contact button */}
                     {user && !isOwnGig && user.role === 'client' && (
                       <button
                         className="btn btn-outline btn-sm"
                         onClick={() => setShowContact(!showContact)}
                         style={{ marginLeft: 'auto' }}
                       >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                         Contacter
                       </button>
                     )}
                   </div>
                 )}
 
+                {/* Contact form */}
                 {showContact && (
                   <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem' }}>
                     <input
@@ -179,7 +216,8 @@ export default function GigDetailPage() {
                   </div>
                 )}
 
-                <div style={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+                {/* Description */}
+                <div style={{ lineHeight: 1.8, whiteSpace: 'pre-wrap', color: 'var(--gray-700)' }}>
                   {gig.description}
                 </div>
               </div>
@@ -188,28 +226,32 @@ export default function GigDetailPage() {
             {/* Reviews */}
             {reviews.length > 0 && (
               <div>
-                <h2 className="section-title">Avis ({reviews.length})</h2>
-                {reviews.map((review: any) => (
-                  <div key={review.id} className="card" style={{ marginBottom: '0.75rem' }}>
-                    <div className="card-body">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <span className="stars">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
-                        <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-                          {new Date(review.createdAt).toLocaleDateString('fr-MA')}
-                        </span>
-                      </div>
-                      <p style={{ lineHeight: 1.6 }}>{review.comment}</p>
-                      {review.providerReply && (
-                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f0fdf4', borderRadius: 8, borderLeft: '3px solid var(--primary)' }}>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '0.25rem' }}>
-                            Reponse du prestataire
-                          </div>
-                          <p style={{ fontSize: '0.9rem', lineHeight: 1.6 }}>{review.providerReply}</p>
+                <h2 className="section-title" style={{ fontSize: '1.25rem' }}>
+                  Avis ({reviews.length})
+                </h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                  {reviews.map((review: any) => (
+                    <div key={review.id} className="card">
+                      <div className="card-body">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                          <span className="stars">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                          <span style={{ color: 'var(--gray-400)', fontSize: '0.8rem' }}>
+                            {new Date(review.createdAt).toLocaleDateString('fr-MA')}
+                          </span>
                         </div>
-                      )}
+                        <p style={{ lineHeight: 1.7, color: 'var(--gray-700)' }}>{review.comment}</p>
+                        {review.providerReply && (
+                          <div className="review-reply">
+                            <div className="review-reply-label">Reponse du prestataire</div>
+                            <p style={{ fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--gray-700)' }}>
+                              {review.providerReply}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>

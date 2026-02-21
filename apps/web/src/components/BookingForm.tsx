@@ -11,7 +11,7 @@ interface BookingFormProps {
   basePrice: number;
 }
 
-export function BookingForm({ gigId, gigTitle, basePrice }: BookingFormProps) {
+export function BookingForm({ gigId, basePrice }: BookingFormProps) {
   const { user, token } = useAuth();
   const router = useRouter();
   const [scheduledAt, setScheduledAt] = useState('');
@@ -23,12 +23,18 @@ export function BookingForm({ gigId, gigTitle, basePrice }: BookingFormProps) {
 
   if (!user || !token) {
     return (
-      <div className="card" style={{ marginTop: '1.5rem' }}>
+      <div className="card">
         <div className="card-body" style={{ textAlign: 'center', padding: '2rem' }}>
-          <p style={{ marginBottom: '1rem', color: '#6b7280' }}>
-            Connectez-vous pour réserver ce service
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)"
+            strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ margin: '0 auto 0.75rem', display: 'block' }}>
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          <p style={{ marginBottom: '1rem', color: 'var(--gray-500)', fontSize: '0.9rem' }}>
+            Connectez-vous pour reserver ce service
           </p>
-          <a href="/auth/login" className="btn btn-primary">Se connecter</a>
+          <a href="/auth/login" className="btn btn-primary" style={{ width: '100%' }}>Se connecter</a>
         </div>
       </div>
     );
@@ -55,7 +61,7 @@ export function BookingForm({ gigId, gigTitle, basePrice }: BookingFormProps) {
       );
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Erreur lors de la réservation');
+      setError(err.message || 'Erreur lors de la reservation');
     } finally {
       setLoading(false);
     }
@@ -63,34 +69,47 @@ export function BookingForm({ gigId, gigTitle, basePrice }: BookingFormProps) {
 
   if (success) {
     return (
-      <div className="card" style={{ marginTop: '1.5rem' }}>
+      <div className="card">
         <div className="card-body" style={{ padding: '2rem', textAlign: 'center' }}>
-          <div className="alert alert-success">
-            Réservation envoyée ! Le prestataire va la confirmer.
+          <div style={{
+            width: 48, height: 48, borderRadius: 'var(--radius-full)',
+            background: 'var(--primary-100)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 0.875rem',
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={() => router.push('/dashboard/bookings')}
-          >
-            Voir mes réservations
+          <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Reservation envoyee !</p>
+          <p style={{ color: 'var(--gray-400)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+            Le prestataire va confirmer votre demande.
+          </p>
+          <button className="btn btn-primary" style={{ width: '100%' }}
+            onClick={() => router.push('/dashboard/my-bookings')}>
+            Voir mes reservations
           </button>
         </div>
       </div>
     );
   }
 
-  // Min date = tomorrow
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().slice(0, 16);
 
   return (
-    <div className="card" style={{ marginTop: '1.5rem' }}>
+    <div className="card">
       <div className="card-body" style={{ padding: '1.5rem' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>
-          Réserver ce service
+        <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '1rem' }}>
+          Reserver ce service
         </h3>
-        <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#f0fdf4', borderRadius: '8px' }}>
+        <div style={{
+          marginBottom: '1.25rem', padding: '0.875rem',
+          background: 'var(--primary-50)', borderRadius: 'var(--radius)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--gray-600)' }}>Prix a partir de</span>
           <span className="price">{basePrice} MAD</span>
         </div>
 
@@ -98,7 +117,7 @@ export function BookingForm({ gigId, gigTitle, basePrice }: BookingFormProps) {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Date et heure souhaitées</label>
+            <label>Date et heure souhaitees</label>
             <input
               type="datetime-local"
               className="form-input"
@@ -115,7 +134,7 @@ export function BookingForm({ gigId, gigTitle, basePrice }: BookingFormProps) {
               className="form-input"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Votre adresse complète"
+              placeholder="Votre adresse complete"
               required
               minLength={5}
             />
@@ -126,17 +145,12 @@ export function BookingForm({ gigId, gigTitle, basePrice }: BookingFormProps) {
               className="form-input"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Instructions supplémentaires..."
+              placeholder="Instructions supplementaires..."
               rows={3}
             />
           </div>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%' }}
-            disabled={loading}
-          >
-            {loading ? 'Envoi...' : 'Confirmer la réservation'}
+          <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
+            {loading ? 'Envoi...' : 'Confirmer la reservation'}
           </button>
         </form>
       </div>

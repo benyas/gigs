@@ -100,9 +100,18 @@ export function SearchAutocomplete({ defaultValue = '', placeholder, name = 'q',
       />
       {open && results.length > 0 && (
         <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
-          background: '#fff', border: '1px solid var(--border)', borderRadius: 8,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4, maxHeight: 320, overflowY: 'auto',
+          position: 'absolute',
+          top: 'calc(100% + 4px)',
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          background: 'var(--card)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-xl)',
+          maxHeight: 320,
+          overflowY: 'auto',
+          animation: 'dropdownIn 0.15s ease-out',
         }}>
           {results.map((item, i) => (
             <div
@@ -110,13 +119,15 @@ export function SearchAutocomplete({ defaultValue = '', placeholder, name = 'q',
               onClick={() => handleSelect(item)}
               onMouseEnter={() => setActiveIndex(i)}
               style={{
-                padding: '0.75rem 1rem', cursor: 'pointer',
-                background: i === activeIndex ? '#f0fdf4' : 'transparent',
-                borderBottom: i < results.length - 1 ? '1px solid #f3f4f6' : 'none',
+                padding: '0.75rem 1rem',
+                cursor: 'pointer',
+                background: i === activeIndex ? 'var(--primary-50)' : 'transparent',
+                borderBottom: i < results.length - 1 ? '1px solid var(--border-light)' : 'none',
+                transition: 'background 100ms ease',
               }}
             >
-              <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{item.title}</div>
-              <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+              <div style={{ fontWeight: 500, fontSize: '0.875rem', color: 'var(--gray-900)' }}>{item.title}</div>
+              <div style={{ fontSize: '0.775rem', color: 'var(--gray-400)', marginTop: '0.125rem' }}>
                 {item.category}{item.city ? ` · ${item.city}` : ''}
               </div>
             </div>

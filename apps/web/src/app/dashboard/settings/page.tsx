@@ -85,7 +85,10 @@ export default function SettingsPage() {
   if (loading || pageLoading) {
     return (
       <section className="section">
-        <div className="container" style={{ textAlign: 'center', padding: '4rem' }}>Chargement...</div>
+        <div className="container" style={{ maxWidth: 600, textAlign: 'center', padding: '4rem' }}>
+          <div className="skeleton" style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 1rem' }} />
+          <div className="skeleton" style={{ width: 200, height: 20, margin: '0 auto' }} />
+        </div>
       </section>
     );
   }
@@ -95,27 +98,37 @@ export default function SettingsPage() {
   return (
     <section className="section">
       <div className="container" style={{ maxWidth: 600 }}>
-        <div style={{ marginBottom: '1rem' }}>
-          <Link href="/dashboard" style={{ color: '#6b7280' }}>&larr; Tableau de bord</Link>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <Link href="/dashboard" style={{ color: 'var(--gray-400)', fontSize: '0.875rem', display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Tableau de bord
+          </Link>
         </div>
+
         <div className="card">
           <div className="card-body" style={{ padding: '2rem' }}>
-            <h1 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Parametres du profil</h1>
+            <h1 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '1.5rem', letterSpacing: '-0.25px' }}>
+              Parametres du profil
+            </h1>
 
             {error && <div className="alert alert-error">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
 
-            {/* Avatar upload */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+            {/* Avatar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.75rem',
+              padding: '1rem', background: 'var(--gray-50)', borderRadius: 'var(--radius)',
+            }}>
               <div
                 onClick={() => avatarInputRef.current?.click()}
                 style={{
-                  width: 80, height: 80, borderRadius: '50%', cursor: 'pointer',
+                  width: 72, height: 72, borderRadius: '50%', cursor: 'pointer',
                   overflow: 'hidden', flexShrink: 0, position: 'relative',
-                  background: avatarUrl ? `url(${avatarUrl}) center/cover` : 'linear-gradient(135deg, #059669, #047857)',
+                  background: avatarUrl ? `url(${avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#fff', fontSize: '2rem', fontWeight: 700,
-                  border: '3px solid var(--border)',
+                  color: '#fff', fontSize: '1.75rem', fontWeight: 700,
+                  border: '3px solid white',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 {!avatarUrl && initials}
@@ -139,7 +152,7 @@ export default function SettingsPage() {
                 >
                   {avatarUploading ? 'Upload...' : 'Changer la photo'}
                 </button>
-                <p style={{ color: '#9ca3af', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                <p style={{ color: 'var(--gray-400)', fontSize: '0.75rem', marginTop: '0.375rem' }}>
                   JPEG, PNG ou WebP, max 5 Mo
                 </p>
               </div>
@@ -199,14 +212,14 @@ export default function SettingsPage() {
                 </select>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.5rem' }}>
                 <span className="badge badge-blue">{user?.role === 'provider' ? 'Prestataire' : 'Client'}</span>
-                <span className="badge">{user?.email}</span>
+                <span className="badge badge-gray">{user?.email}</span>
               </div>
 
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn btn-primary btn-lg"
                 style={{ width: '100%', marginTop: '1.5rem' }}
                 disabled={saving}
               >

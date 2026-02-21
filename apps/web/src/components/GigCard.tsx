@@ -15,48 +15,140 @@ interface GigCardProps {
 
 export function GigCard({ gig }: GigCardProps) {
   const hasImage = gig.media && gig.media.length > 0;
+  const rating = gig.provider?.profile?.ratingAvg || 0;
+  const ratingCount = gig.provider?.profile?.ratingCount || 0;
 
   return (
     <Link href={`/gig/${gig.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s, box-shadow 0.2s' }}>
-        <div
-          style={{
-            height: 160,
-            background: hasImage
-              ? `url(${gig.media![0].url}) center/cover`
-              : 'linear-gradient(135deg, #d1fae5, #a7f3d0)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: hasImage ? '0' : '1.5rem',
-            color: '#059669',
-            fontWeight: 600,
-            borderRadius: '12px 12px 0 0',
-          }}
-        >
-          {!hasImage && (gig.category?.icon || gig.category?.name || 'Service')}
+      <div className="card card-interactive" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* Image */}
+        <div style={{
+          height: 180,
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          {hasImage ? (
+            <img
+              src={gig.media![0].url}
+              alt={gig.title}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div style={{
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(135deg, var(--primary-100), var(--primary-200))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+            }}>
+              <span style={{ fontSize: '1.5rem' }}>{gig.category?.icon}</span>
+              <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                {gig.category?.name || 'Service'}
+              </span>
+            </div>
+          )}
+          {/* Price badge overlay */}
+          <div style={{
+            position: 'absolute',
+            bottom: 10,
+            right: 10,
+            background: 'var(--card)',
+            padding: '0.25rem 0.625rem',
+            borderRadius: 'var(--radius-sm)',
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            color: 'var(--primary)',
+            boxShadow: 'var(--shadow-sm)',
+          }}>
+            {gig.basePrice} MAD
+          </div>
         </div>
-        <div className="card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+
+        {/* Content */}
+        <div className="card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {/* Tags */}
+          <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
             {gig.category && <span className="badge badge-green">{gig.category.name}</span>}
             {gig.city && <span className="badge badge-blue">{gig.city.name}</span>}
           </div>
-          <h3 style={{ fontSize: '1.05rem', marginBottom: '0.5rem', lineHeight: 1.3 }}>{gig.title}</h3>
-          <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '0.75rem', flex: 1 }}>
-            {gig.description.length > 100 ? gig.description.slice(0, 100) + '...' : gig.description}
+
+          {/* Title */}
+          <h3 style={{
+            fontSize: '0.95rem',
+            fontWeight: 600,
+            lineHeight: 1.35,
+            color: 'var(--gray-900)',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}>
+            {gig.title}
+          </h3>
+
+          {/* Description */}
+          <p style={{
+            color: 'var(--gray-500)',
+            fontSize: '0.825rem',
+            lineHeight: 1.5,
+            flex: 1,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}>
+            {gig.description}
           </p>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f3f4f6', paddingTop: '0.75rem' }}>
-            <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1.1rem' }}>
-              {gig.basePrice} MAD
-            </span>
-            {gig.provider?.profile && (
-              <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-                <span className="stars">{'★'.repeat(Math.round(gig.provider.profile.ratingAvg))}</span>
-                {gig.provider.profile.ratingCount > 0 && ` (${gig.provider.profile.ratingCount})`}
-                {gig.provider.profile.isVerified && <span style={{ color: 'var(--primary)', marginLeft: '0.25rem' }}>&#10003;</span>}
-              </span>
-            )}
-          </div>
+
+          {/* Footer */}
+          {gig.provider?.profile && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingTop: '0.625rem',
+              borderTop: '1px solid var(--border-light)',
+              marginTop: 'auto',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="avatar-sm" style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                }}>
+                  {gig.provider.profile.name?.charAt(0)?.toUpperCase()}
+                </div>
+                <span style={{ fontSize: '0.8rem', color: 'var(--gray-600)', fontWeight: 500 }}>
+                  {gig.provider.profile.name?.split(' ')[0]}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem' }}>
+                {rating > 0 && (
+                  <>
+                    <span style={{ color: 'var(--yellow-500)' }}>&#9733;</span>
+                    <span style={{ fontWeight: 600, color: 'var(--gray-700)' }}>{rating.toFixed(1)}</span>
+                    {ratingCount > 0 && (
+                      <span style={{ color: 'var(--gray-400)', fontSize: '0.75rem' }}>({ratingCount})</span>
+                    )}
+                  </>
+                )}
+                {gig.provider.profile.isVerified && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--primary)" style={{ marginLeft: '0.125rem' }}>
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Link>
