@@ -1,0 +1,90 @@
+<!-- title: Services -->
+<div x-data="gigsPage()" x-init="load()">
+  <div class="flex flex-wrap gap-3 mb-6">
+    <select x-model="statusFilter" @change="page = 1; load()" class="select max-w-[180px]">
+      <option value="">Tous les statuts</option>
+      <option value="active">Actif</option>
+      <option value="draft">Brouillon</option>
+      <option value="paused">En pause</option>
+      <option value="rejected">Rejete</option>
+    </select>
+  </div>
+
+  <template x-if="loading">
+    <div class="text-center py-12 text-gray-400">Chargement...</div>
+  </template>
+
+  <template x-if="!loading">
+    <div>
+      <div class="table-container">
+        <table class="w-full">
+          <thead>
+            <tr>
+              <th class="th">Titre</th>
+              <th class="th">Prestataire</th>
+              <th class="th">Categorie</th>
+              <th class="th">Prix</th>
+              <th class="th">Statut</th>
+              <th class="th text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="gig in gigs" :key="gig.id">
+              <tr>
+                <td class="td font-medium" x-text="gig.title?.substring(0, 35)"></td>
+                <td class="td text-gray-500" x-text="gig.provider?.profile?.name || '-'"></td>
+                <td class="td text-gray-500" x-text="gig.category?.name || '-'"></td>
+                <td class="td" x-text="gig.basePrice + ' MAD'"></td>
+                <td class="td">
+                  <span :class="statusClass(gig.status)" x-text="gig.status"></span>
+                </td>
+                <td class="td text-right">
+                  <select :value="gig.status" @change="changeStatus(gig.id, $event.target.value)" class="select !w-auto !py-1 !px-2 text-xs">
+                    <option value="active">Activer</option>
+                    <option value="paused">Pause</option>
+                    <option value="rejected">Rejeter</option>
+                  </select>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+      <template x-if="meta && meta.totalPages > 1">
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <button @click="page--; load()" :disabled="page <= 1" class="btn-secondary btn-sm">Precedent</button>
+          <span class="text-sm text-gray-500" x-text="'Page ' + page + ' / ' + meta.totalPages"></span>
+          <button @click="page++; load()" :disabled="page >= meta.totalPages" class="btn-secondary btn-sm">Suivant</button>
+        </div>
+      </template>
+    </div>
+  </template>
+</div>
+
+<script>
+function gigsPage() {
+  return {
+    gigs: [], meta: null, loading: true, page: 1, statusFilter: '',
+    async load() {
+      this.loading = true;
+      try {
+        const params = new URLSearchParams({ page: this.page });
+        if (this.statusFilter) params.set('status', this.statusFilter);
+        const res = await Alpine.store('api').get('/admin/gigs?' + params);
+        this.gigs = res.data;
+        this.meta = res.meta;
+      } catch (e) { console.error(e); }
+      this.loading = false;
+    },
+    async changeStatus(id, status) {
+      try { await Alpine.store('api').patch('/admin/gigs/' + id + '/status', { status }); }
+      catch (e) { alert(e.message); this.load(); }
+    },
+    statusClass(s) {
+      const m = { active: 'badge-green', draft: 'badge-yellow', paused: 'badge-blue', rejected: 'badge-red' };
+      return m[s] || 'badge-gray';
+    }
+  };
+}
+</script>

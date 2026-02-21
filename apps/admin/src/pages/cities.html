@@ -1,0 +1,118 @@
+<!-- title: Villes -->
+<div x-data="citiesPage()" x-init="load()">
+  <div class="flex justify-end mb-6">
+    <button @click="openCreate()" class="btn-primary">+ Ajouter</button>
+  </div>
+
+  <template x-if="loading">
+    <div class="text-center py-12 text-gray-400">Chargement...</div>
+  </template>
+
+  <template x-if="!loading">
+    <div>
+      <template x-if="items.length === 0">
+        <div class="text-center py-12 text-gray-400">Aucune ville.</div>
+      </template>
+
+      <template x-if="items.length > 0">
+        <div class="table-container">
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th class="th">Nom</th>
+                <th class="th">Region</th>
+                <th class="th text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="city in items" :key="city.id">
+                <tr>
+                  <td class="td font-medium" x-text="city.name"></td>
+                  <td class="td text-gray-500" x-text="city.region"></td>
+                  <td class="td text-right">
+                    <button @click="confirmDelete(city)" class="btn-ghost btn-sm text-red-600 hover:text-red-700">Supprimer</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <!-- Create modal -->
+  <template x-if="showCreate">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="showCreate = false">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+        <h2 class="text-lg font-bold mb-4">Ajouter une ville</h2>
+        <template x-if="formError">
+          <div class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" x-text="formError"></div>
+        </template>
+        <div class="space-y-3">
+          <div>
+            <label class="label">Nom de la ville</label>
+            <input type="text" x-model="form.name" class="input" placeholder="Ex: Casablanca">
+          </div>
+          <div>
+            <label class="label">Region</label>
+            <input type="text" x-model="form.region" class="input" placeholder="Ex: Casablanca-Settat">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-6">
+          <button @click="showCreate = false" class="btn-secondary">Annuler</button>
+          <button @click="create()" class="btn-primary" :disabled="saving || !form.name || !form.region">
+            <span x-text="saving ? 'Ajout...' : 'Ajouter'"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Delete confirm modal -->
+  <template x-if="deleteTarget">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="deleteTarget = null">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 m-4">
+        <h2 class="text-lg font-bold mb-2">Supprimer</h2>
+        <p class="text-sm text-gray-500 mb-6">Supprimer "<span x-text="deleteTarget.name"></span>" ? Cette action est irreversible.</p>
+        <div class="flex justify-end gap-2">
+          <button @click="deleteTarget = null" class="btn-secondary">Annuler</button>
+          <button @click="remove()" class="btn-danger">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function citiesPage() {
+  return {
+    items: [], loading: true, showCreate: false, deleteTarget: null,
+    form: { name: '', region: '' }, saving: false, formError: '',
+    async load() {
+      this.loading = true;
+      try { this.items = await Alpine.store('api').get('/cities'); }
+      catch (e) { console.error(e); }
+      this.loading = false;
+    },
+    openCreate() { this.form = { name: '', region: '' }; this.formError = ''; this.showCreate = true; },
+    async create() {
+      this.saving = true; this.formError = '';
+      try {
+        await Alpine.store('api').post('/admin/cities', this.form);
+        this.showCreate = false;
+        this.load();
+      } catch (e) { this.formError = e.message; }
+      this.saving = false;
+    },
+    confirmDelete(city) { this.deleteTarget = city; },
+    async remove() {
+      try {
+        await Alpine.store('api').del('/admin/cities/' + this.deleteTarget.id);
+        this.deleteTarget = null;
+        this.load();
+      } catch (e) { alert(e.message); }
+    }
+  };
+}
+</script>

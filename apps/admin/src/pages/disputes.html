@@ -1,0 +1,143 @@
+<!-- title: Litiges -->
+<div x-data="disputesPage()" x-init="load()">
+  <div class="flex gap-2 mb-6">
+    <template x-for="tab in tabs" :key="tab.value">
+      <button @click="statusFilter = tab.value; page = 1; load()"
+        :class="statusFilter === tab.value ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'"
+        x-text="tab.label"></button>
+    </template>
+  </div>
+
+  <template x-if="loading">
+    <div class="text-center py-12 text-gray-400">Chargement...</div>
+  </template>
+
+  <template x-if="!loading">
+    <div>
+      <template x-if="items.length === 0">
+        <div class="text-center py-12 text-gray-400">Aucun litige.</div>
+      </template>
+
+      <template x-if="items.length > 0">
+        <div class="space-y-3">
+          <template x-for="d in items" :key="d.id">
+            <div class="card !p-0">
+              <!-- Row header -->
+              <div class="flex items-center justify-between px-5 py-4 cursor-pointer" @click="expanded === d.id ? expanded = null : expanded = d.id">
+                <div class="flex items-center gap-4">
+                  <span :class="statusClass(d.status)" x-text="statusLabel(d.status)"></span>
+                  <span class="font-medium text-sm" x-text="d.booking?.gig?.title?.substring(0, 30) || 'Reservation #' + d.bookingId?.substring(0, 8)"></span>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-gray-500">
+                  <span x-text="d.initiator?.profile?.name || 'Utilisateur'"></span>
+                  <span x-text="new Date(d.createdAt).toLocaleDateString('fr-MA')"></span>
+                  <svg class="w-4 h-4 transition" :class="expanded === d.id && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+              </div>
+
+              <!-- Expanded detail -->
+              <div x-show="expanded === d.id" x-collapse class="border-t border-gray-100 px-5 py-4 space-y-4">
+                <div>
+                  <p class="text-xs font-semibold text-gray-500 mb-1">Raison</p>
+                  <p class="text-sm text-gray-700" x-text="d.reason"></p>
+                </div>
+
+                <template x-if="d.messages && d.messages.length > 0">
+                  <div>
+                    <p class="text-xs font-semibold text-gray-500 mb-2">Messages</p>
+                    <div class="space-y-2">
+                      <template x-for="msg in d.messages" :key="msg.id">
+                        <div class="bg-gray-50 rounded-lg px-3 py-2">
+                          <p class="text-xs font-medium text-gray-600" x-text="msg.sender?.profile?.name || 'Utilisateur'"></p>
+                          <p class="text-sm text-gray-700" x-text="msg.content"></p>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Resolve form -->
+                <template x-if="d.status === 'open'">
+                  <div class="border-t border-gray-100 pt-4">
+                    <p class="text-xs font-semibold text-gray-500 mb-2">Resoudre le litige</p>
+                    <textarea x-model="resolveForm.resolution" class="input min-h-[80px] mb-3" placeholder="Resolution..."></textarea>
+                    <div class="flex items-center gap-3">
+                      <select x-model="resolveForm.favorOf" class="select max-w-[200px]">
+                        <option value="">En faveur de...</option>
+                        <option value="client">Client</option>
+                        <option value="provider">Prestataire</option>
+                      </select>
+                      <button @click="resolve(d)" class="btn-primary btn-sm" :disabled="!resolveForm.resolution || !resolveForm.favorOf">Resoudre</button>
+                    </div>
+                  </div>
+                </template>
+
+                <template x-if="d.status === 'resolved' && d.resolution">
+                  <div class="border-t border-gray-100 pt-4">
+                    <p class="text-xs font-semibold text-gray-500 mb-1">Resolution</p>
+                    <p class="text-sm text-gray-700" x-text="d.resolution"></p>
+                    <template x-if="d.resolvedInFavorOf">
+                      <p class="text-xs text-gray-500 mt-1">En faveur du <span x-text="d.resolvedInFavorOf === 'client' ? 'client' : 'prestataire'"></span></p>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <template x-if="meta && meta.totalPages > 1">
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <button @click="page--; load()" :disabled="page <= 1" class="btn-secondary btn-sm">Precedent</button>
+          <span class="text-sm text-gray-500" x-text="'Page ' + page + ' / ' + meta.totalPages"></span>
+          <button @click="page++; load()" :disabled="page >= meta.totalPages" class="btn-secondary btn-sm">Suivant</button>
+        </div>
+      </template>
+    </div>
+  </template>
+</div>
+
+<script>
+function disputesPage() {
+  return {
+    items: [], meta: null, loading: true, page: 1, statusFilter: '', expanded: null,
+    resolveForm: { resolution: '', favorOf: '' },
+    tabs: [
+      { value: '', label: 'Tous' },
+      { value: 'open', label: 'Ouverts' },
+      { value: 'resolved', label: 'Resolus' },
+      { value: 'closed', label: 'Fermes' },
+    ],
+    async load() {
+      this.loading = true;
+      try {
+        const params = new URLSearchParams({ page: this.page });
+        if (this.statusFilter) params.set('status', this.statusFilter);
+        const res = await Alpine.store('api').get('/admin/disputes?' + params);
+        this.items = res.data;
+        this.meta = res.meta;
+      } catch (e) { console.error(e); }
+      this.loading = false;
+    },
+    statusClass(s) {
+      const m = { open: 'badge-yellow', resolved: 'badge-green', closed: 'badge-gray' };
+      return m[s] || 'badge-gray';
+    },
+    statusLabel(s) {
+      const m = { open: 'Ouvert', resolved: 'Resolu', closed: 'Ferme' };
+      return m[s] || s;
+    },
+    async resolve(d) {
+      try {
+        await Alpine.store('api').patch('/admin/disputes/' + d.id + '/resolve', {
+          resolution: this.resolveForm.resolution,
+          resolveInFavorOf: this.resolveForm.favorOf,
+        });
+        this.resolveForm = { resolution: '', favorOf: '' };
+        this.load();
+      } catch (e) { alert(e.message); }
+    }
+  };
+}
+</script>

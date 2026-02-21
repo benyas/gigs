@@ -9,7 +9,10 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: process.env.WEB_URL || 'http://localhost:3000',
+    origin: [
+      process.env.WEB_URL || 'http://localhost:3000',
+      process.env.ADMIN_URL || 'http://localhost:3001',
+    ],
     credentials: true,
   });
 

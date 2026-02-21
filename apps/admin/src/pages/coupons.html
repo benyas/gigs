@@ -1,0 +1,192 @@
+<!-- title: Coupons -->
+<div x-data="couponsPage()" x-init="load()">
+  <div class="flex justify-end mb-6">
+    <button @click="openForm()" class="btn-primary">+ Creer un coupon</button>
+  </div>
+
+  <template x-if="loading">
+    <div class="text-center py-12 text-gray-400">Chargement...</div>
+  </template>
+
+  <template x-if="!loading">
+    <div>
+      <template x-if="items.length === 0">
+        <div class="text-center py-12 text-gray-400">Aucun coupon.</div>
+      </template>
+
+      <template x-if="items.length > 0">
+        <div class="table-container">
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th class="th">Code</th>
+                <th class="th">Type</th>
+                <th class="th">Valeur</th>
+                <th class="th">Utilisations</th>
+                <th class="th">Min. commande</th>
+                <th class="th">Expire</th>
+                <th class="th">Actif</th>
+                <th class="th text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="c in items" :key="c.id">
+                <tr>
+                  <td class="td font-mono font-medium" x-text="c.code"></td>
+                  <td class="td" x-text="c.type === 'percentage' ? '%' : 'MAD'"></td>
+                  <td class="td font-medium" x-text="c.value + (c.type === 'percentage' ? '%' : ' MAD')"></td>
+                  <td class="td" x-text="(c.usedCount || 0) + '/' + (c.maxUses || '∞')"></td>
+                  <td class="td" x-text="c.minOrderValue ? c.minOrderValue + ' MAD' : '-'"></td>
+                  <td class="td text-gray-500" x-text="c.expiresAt ? new Date(c.expiresAt).toLocaleDateString('fr-MA') : '-'"></td>
+                  <td class="td">
+                    <button @click="toggleActive(c)" :class="c.isActive ? 'badge-green' : 'badge-gray'" x-text="c.isActive ? 'Oui' : 'Non'"></button>
+                  </td>
+                  <td class="td text-right space-x-2">
+                    <button @click="openForm(c)" class="btn-ghost btn-sm">Modifier</button>
+                    <button @click="confirmDelete(c)" class="btn-ghost btn-sm text-red-600">Supprimer</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </template>
+
+      <template x-if="meta && meta.totalPages > 1">
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <button @click="page--; load()" :disabled="page <= 1" class="btn-secondary btn-sm">Precedent</button>
+          <span class="text-sm text-gray-500" x-text="'Page ' + page + ' / ' + meta.totalPages"></span>
+          <button @click="page++; load()" :disabled="page >= meta.totalPages" class="btn-secondary btn-sm">Suivant</button>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <!-- Create/Edit modal -->
+  <template x-if="showForm">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="showForm = false">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+        <h2 class="text-lg font-bold mb-4" x-text="editId ? 'Modifier le coupon' : 'Creer un coupon'"></h2>
+        <template x-if="formError">
+          <div class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" x-text="formError"></div>
+        </template>
+        <div class="space-y-3">
+          <div>
+            <label class="label">Code</label>
+            <input type="text" x-model="form.code" class="input font-mono uppercase" placeholder="EX: PROMO20">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Type</label>
+              <select x-model="form.type" class="select">
+                <option value="percentage">Pourcentage</option>
+                <option value="fixed">Montant fixe</option>
+              </select>
+            </div>
+            <div>
+              <label class="label">Valeur</label>
+              <input type="number" x-model="form.value" class="input" placeholder="20">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Max utilisations</label>
+              <input type="number" x-model="form.maxUses" class="input" placeholder="100">
+            </div>
+            <div>
+              <label class="label">Min. commande (MAD)</label>
+              <input type="number" x-model="form.minOrderValue" class="input" placeholder="0">
+            </div>
+          </div>
+          <div>
+            <label class="label">Date d'expiration</label>
+            <input type="date" x-model="form.expiresAt" class="input">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-6">
+          <button @click="showForm = false" class="btn-secondary">Annuler</button>
+          <button @click="save()" class="btn-primary" :disabled="saving || !form.code || !form.value">
+            <span x-text="saving ? 'Enregistrement...' : (editId ? 'Modifier' : 'Creer')"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Delete confirm -->
+  <template x-if="deleteTarget">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="deleteTarget = null">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 m-4">
+        <h2 class="text-lg font-bold mb-2">Supprimer</h2>
+        <p class="text-sm text-gray-500 mb-6">Supprimer le coupon "<span x-text="deleteTarget.code"></span>" ?</p>
+        <div class="flex justify-end gap-2">
+          <button @click="deleteTarget = null" class="btn-secondary">Annuler</button>
+          <button @click="remove()" class="btn-danger">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function couponsPage() {
+  return {
+    items: [], meta: null, loading: true, page: 1,
+    showForm: false, editId: null, deleteTarget: null, saving: false, formError: '',
+    form: { code: '', type: 'percentage', value: '', maxUses: '', minOrderValue: '', expiresAt: '' },
+    async load() {
+      this.loading = true;
+      try {
+        const res = await Alpine.store('api').get('/admin/coupons?page=' + this.page);
+        this.items = res.data;
+        this.meta = res.meta;
+      } catch (e) { console.error(e); }
+      this.loading = false;
+    },
+    openForm(coupon) {
+      this.formError = '';
+      if (coupon) {
+        this.editId = coupon.id;
+        this.form = {
+          code: coupon.code, type: coupon.type, value: coupon.value,
+          maxUses: coupon.maxUses || '', minOrderValue: coupon.minOrderValue || '',
+          expiresAt: coupon.expiresAt ? coupon.expiresAt.split('T')[0] : '',
+        };
+      } else {
+        this.editId = null;
+        this.form = { code: '', type: 'percentage', value: '', maxUses: '', minOrderValue: '', expiresAt: '' };
+      }
+      this.showForm = true;
+    },
+    async save() {
+      this.saving = true; this.formError = '';
+      const body = { ...this.form, value: parseFloat(this.form.value) };
+      if (body.maxUses) body.maxUses = parseInt(body.maxUses);
+      if (body.minOrderValue) body.minOrderValue = parseFloat(body.minOrderValue);
+      if (body.expiresAt) body.expiresAt = new Date(body.expiresAt).toISOString();
+      else delete body.expiresAt;
+      try {
+        if (this.editId) await Alpine.store('api').patch('/admin/coupons/' + this.editId, body);
+        else await Alpine.store('api').post('/admin/coupons', body);
+        this.showForm = false;
+        this.load();
+      } catch (e) { this.formError = e.message; }
+      this.saving = false;
+    },
+    async toggleActive(c) {
+      try {
+        await Alpine.store('api').patch('/admin/coupons/' + c.id, { isActive: !c.isActive });
+        c.isActive = !c.isActive;
+      } catch (e) { alert(e.message); }
+    },
+    confirmDelete(c) { this.deleteTarget = c; },
+    async remove() {
+      try {
+        await Alpine.store('api').del('/admin/coupons/' + this.deleteTarget.id);
+        this.deleteTarget = null;
+        this.load();
+      } catch (e) { alert(e.message); }
+    }
+  };
+}
+</script>

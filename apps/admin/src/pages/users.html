@@ -1,0 +1,97 @@
+<!-- title: Utilisateurs -->
+<div x-data="usersPage()" x-init="load()">
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-3 mb-6">
+    <input type="text" x-model="search" @input.debounce.300ms="load()" class="input max-w-xs" placeholder="Rechercher...">
+    <select x-model="roleFilter" @change="page = 1; load()" class="select max-w-[160px]">
+      <option value="">Tous les roles</option>
+      <option value="client">Client</option>
+      <option value="provider">Prestataire</option>
+      <option value="admin">Admin</option>
+    </select>
+  </div>
+
+  <template x-if="loading">
+    <div class="text-center py-12 text-gray-400">Chargement...</div>
+  </template>
+
+  <template x-if="!loading">
+    <div>
+      <div class="table-container">
+        <table class="w-full">
+          <thead>
+            <tr>
+              <th class="th">Nom</th>
+              <th class="th">Email</th>
+              <th class="th">Role</th>
+              <th class="th">Verifie</th>
+              <th class="th">Inscrit le</th>
+              <th class="th text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="user in users" :key="user.id">
+              <tr>
+                <td class="td font-medium" x-text="user.profile?.name || '-'"></td>
+                <td class="td text-gray-500" x-text="user.email"></td>
+                <td class="td">
+                  <select :value="user.role" @change="changeRole(user.id, $event.target.value)" class="select !w-auto !py-1 !px-2 text-xs">
+                    <option value="client">Client</option>
+                    <option value="provider">Prestataire</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </td>
+                <td class="td">
+                  <button @click="toggleVerify(user)" class="text-xs" :class="user.isVerified ? 'badge-green' : 'badge-gray'" x-text="user.isVerified ? 'Oui' : 'Non'"></button>
+                </td>
+                <td class="td text-gray-500" x-text="new Date(user.createdAt).toLocaleDateString('fr-MA')"></td>
+                <td class="td text-right">
+                  <span class="text-xs text-gray-400" x-text="user.id.substring(0, 8)"></span>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <template x-if="meta && meta.totalPages > 1">
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <button @click="page--; load()" :disabled="page <= 1" class="btn-secondary btn-sm">Precedent</button>
+          <span class="text-sm text-gray-500" x-text="'Page ' + page + ' / ' + meta.totalPages"></span>
+          <button @click="page++; load()" :disabled="page >= meta.totalPages" class="btn-secondary btn-sm">Suivant</button>
+        </div>
+      </template>
+    </div>
+  </template>
+</div>
+
+<script>
+function usersPage() {
+  return {
+    users: [], meta: null, loading: true, page: 1, search: '', roleFilter: '',
+    async load() {
+      this.loading = true;
+      try {
+        const params = new URLSearchParams({ page: this.page });
+        if (this.roleFilter) params.set('role', this.roleFilter);
+        if (this.search) params.set('q', this.search);
+        const res = await Alpine.store('api').get('/admin/users?' + params);
+        this.users = res.data;
+        this.meta = res.meta;
+      } catch (e) { console.error(e); }
+      this.loading = false;
+    },
+    async changeRole(id, role) {
+      try { await Alpine.store('api').patch('/admin/users/' + id + '/role', { role }); }
+      catch (e) { alert(e.message); this.load(); }
+    },
+    async toggleVerify(user) {
+      try {
+        await Alpine.store('api').patch('/admin/users/' + user.id + '/verify', { verified: !user.isVerified });
+        user.isVerified = !user.isVerified;
+      } catch (e) { alert(e.message); }
+    }
+  };
+}
+</script>

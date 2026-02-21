@@ -1,0 +1,85 @@
+<!-- title: Reservations -->
+<div x-data="bookingsPage()" x-init="load()">
+  <div class="flex flex-wrap gap-3 mb-6">
+    <select x-model="statusFilter" @change="page = 1; load()" class="select max-w-[180px]">
+      <option value="">Tous les statuts</option>
+      <option value="pending">En attente</option>
+      <option value="accepted">Accepte</option>
+      <option value="in_progress">En cours</option>
+      <option value="completed">Termine</option>
+      <option value="cancelled">Annule</option>
+    </select>
+  </div>
+
+  <template x-if="loading">
+    <div class="text-center py-12 text-gray-400">Chargement...</div>
+  </template>
+
+  <template x-if="!loading">
+    <div>
+      <div class="table-container">
+        <table class="w-full">
+          <thead>
+            <tr>
+              <th class="th">Service</th>
+              <th class="th">Client</th>
+              <th class="th">Prestataire</th>
+              <th class="th">Date</th>
+              <th class="th">Montant</th>
+              <th class="th">Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="b in bookings" :key="b.id">
+              <tr>
+                <td class="td font-medium" x-text="b.gig?.title?.substring(0, 30) || '-'"></td>
+                <td class="td text-gray-500" x-text="b.client?.profile?.name || '-'"></td>
+                <td class="td text-gray-500" x-text="b.provider?.profile?.name || '-'"></td>
+                <td class="td" x-text="new Date(b.createdAt).toLocaleDateString('fr-MA')"></td>
+                <td class="td font-medium" x-text="b.totalPrice + ' MAD'"></td>
+                <td class="td">
+                  <span :class="statusClass(b.status)" x-text="statusLabel(b.status)"></span>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+      <template x-if="meta && meta.totalPages > 1">
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <button @click="page--; load()" :disabled="page <= 1" class="btn-secondary btn-sm">Precedent</button>
+          <span class="text-sm text-gray-500" x-text="'Page ' + page + ' / ' + meta.totalPages"></span>
+          <button @click="page++; load()" :disabled="page >= meta.totalPages" class="btn-secondary btn-sm">Suivant</button>
+        </div>
+      </template>
+    </div>
+  </template>
+</div>
+
+<script>
+function bookingsPage() {
+  return {
+    bookings: [], meta: null, loading: true, page: 1, statusFilter: '',
+    async load() {
+      this.loading = true;
+      try {
+        const params = new URLSearchParams({ page: this.page });
+        if (this.statusFilter) params.set('status', this.statusFilter);
+        const res = await Alpine.store('api').get('/admin/bookings?' + params);
+        this.bookings = res.data;
+        this.meta = res.meta;
+      } catch (e) { console.error(e); }
+      this.loading = false;
+    },
+    statusClass(s) {
+      const m = { pending: 'badge-yellow', accepted: 'badge-blue', in_progress: 'badge-purple', completed: 'badge-green', cancelled: 'badge-red' };
+      return m[s] || 'badge-gray';
+    },
+    statusLabel(s) {
+      const m = { pending: 'En attente', accepted: 'Accepte', in_progress: 'En cours', completed: 'Termine', cancelled: 'Annule' };
+      return m[s] || s;
+    }
+  };
+}
+</script>

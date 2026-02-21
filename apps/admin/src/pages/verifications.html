@@ -1,0 +1,146 @@
+<!-- title: Verifications -->
+<div x-data="verificationsPage()" x-init="load()">
+  <!-- Status tabs -->
+  <div class="flex gap-2 mb-6">
+    <template x-for="tab in tabs" :key="tab.value">
+      <button @click="statusFilter = tab.value; page = 1; load()"
+        :class="statusFilter === tab.value ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'"
+        x-text="tab.label"></button>
+    </template>
+  </div>
+
+  <template x-if="loading">
+    <div class="text-center py-12 text-gray-400">Chargement...</div>
+  </template>
+
+  <template x-if="!loading">
+    <div>
+      <template x-if="items.length === 0">
+        <div class="text-center py-12 text-gray-400">Aucune verification.</div>
+      </template>
+
+      <template x-if="items.length > 0">
+        <div class="table-container">
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th class="th">Utilisateur</th>
+                <th class="th">Type</th>
+                <th class="th">Date</th>
+                <th class="th">Statut</th>
+                <th class="th text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="v in items" :key="v.id">
+                <tr>
+                  <td class="td font-medium" x-text="v.user?.profile?.name || v.user?.email || '-'"></td>
+                  <td class="td" x-text="v.type"></td>
+                  <td class="td text-gray-500" x-text="new Date(v.createdAt).toLocaleDateString('fr-MA')"></td>
+                  <td class="td">
+                    <span :class="statusClass(v.status)" x-text="statusLabel(v.status)"></span>
+                  </td>
+                  <td class="td text-right space-x-2">
+                    <template x-if="v.documentUrl">
+                      <button @click="viewDoc(v)" class="btn-ghost btn-sm">Voir</button>
+                    </template>
+                    <template x-if="v.status === 'pending'">
+                      <span>
+                        <button @click="approve(v)" class="btn-sm bg-green-50 text-green-700 hover:bg-green-100 rounded-lg px-3 py-1.5 text-xs font-medium">Approuver</button>
+                        <button @click="openReject(v)" class="btn-sm bg-red-50 text-red-700 hover:bg-red-100 rounded-lg px-3 py-1.5 text-xs font-medium">Rejeter</button>
+                      </span>
+                    </template>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </template>
+
+      <template x-if="meta && meta.totalPages > 1">
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <button @click="page--; load()" :disabled="page <= 1" class="btn-secondary btn-sm">Precedent</button>
+          <span class="text-sm text-gray-500" x-text="'Page ' + page + ' / ' + meta.totalPages"></span>
+          <button @click="page++; load()" :disabled="page >= meta.totalPages" class="btn-secondary btn-sm">Suivant</button>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <!-- Document viewer modal -->
+  <template x-if="docView">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="docView = null">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 m-4">
+        <h2 class="text-lg font-bold mb-4">Document</h2>
+        <img :src="docView" class="max-h-[60vh] mx-auto rounded-lg" alt="Document">
+        <div class="flex justify-end mt-4">
+          <button @click="docView = null" class="btn-secondary">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Reject reason modal -->
+  <template x-if="rejectTarget">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="rejectTarget = null">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+        <h2 class="text-lg font-bold mb-4">Raison du rejet</h2>
+        <textarea x-model="rejectReason" class="input min-h-[100px]" placeholder="Raison..."></textarea>
+        <div class="flex justify-end gap-2 mt-4">
+          <button @click="rejectTarget = null" class="btn-secondary">Annuler</button>
+          <button @click="reject()" class="btn-danger">Rejeter</button>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function verificationsPage() {
+  return {
+    items: [], meta: null, loading: true, page: 1, statusFilter: '',
+    docView: null, rejectTarget: null, rejectReason: '',
+    tabs: [
+      { value: '', label: 'Tous' },
+      { value: 'pending', label: 'En attente' },
+      { value: 'approved', label: 'Approuve' },
+      { value: 'rejected', label: 'Rejete' },
+    ],
+    async load() {
+      this.loading = true;
+      try {
+        const params = new URLSearchParams({ page: this.page });
+        if (this.statusFilter) params.set('status', this.statusFilter);
+        const res = await Alpine.store('api').get('/admin/verifications?' + params);
+        this.items = res.data;
+        this.meta = res.meta;
+      } catch (e) { console.error(e); }
+      this.loading = false;
+    },
+    statusClass(s) {
+      const m = { pending: 'badge-yellow', approved: 'badge-green', rejected: 'badge-red' };
+      return m[s] || 'badge-gray';
+    },
+    statusLabel(s) {
+      const m = { pending: 'En attente', approved: 'Approuve', rejected: 'Rejete' };
+      return m[s] || s;
+    },
+    viewDoc(v) { this.docView = v.documentUrl; },
+    async approve(v) {
+      try {
+        await Alpine.store('api').patch('/admin/verifications/' + v.id, { approved: true });
+        this.load();
+      } catch (e) { alert(e.message); }
+    },
+    openReject(v) { this.rejectTarget = v; this.rejectReason = ''; },
+    async reject() {
+      try {
+        await Alpine.store('api').patch('/admin/verifications/' + this.rejectTarget.id, { approved: false, rejectReason: this.rejectReason });
+        this.rejectTarget = null;
+        this.load();
+      } catch (e) { alert(e.message); }
+    }
+  };
+}
+</script>

@@ -1,0 +1,114 @@
+<!-- title: Categories -->
+<div x-data="categoriesPage()" x-init="load()">
+  <div class="flex justify-end mb-6">
+    <button @click="openCreate()" class="btn-primary">+ Ajouter</button>
+  </div>
+
+  <template x-if="loading">
+    <div class="text-center py-12 text-gray-400">Chargement...</div>
+  </template>
+
+  <template x-if="!loading">
+    <div>
+      <template x-if="items.length === 0">
+        <div class="text-center py-12 text-gray-400">Aucune categorie.</div>
+      </template>
+
+      <template x-if="items.length > 0">
+        <div class="table-container">
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th class="th">Nom</th>
+                <th class="th">Slug</th>
+                <th class="th text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="cat in items" :key="cat.id">
+                <tr>
+                  <td class="td font-medium" x-text="cat.name"></td>
+                  <td class="td text-gray-500" x-text="cat.slug"></td>
+                  <td class="td text-right space-x-2">
+                    <button @click="confirmDelete(cat)" class="btn-ghost btn-sm text-red-600 hover:text-red-700">Supprimer</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <!-- Create modal -->
+  <template x-if="showCreate">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="showCreate = false">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+        <h2 class="text-lg font-bold mb-4">Ajouter une categorie</h2>
+        <template x-if="formError">
+          <div class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" x-text="formError"></div>
+        </template>
+        <div class="space-y-3">
+          <div>
+            <label class="label">Nom</label>
+            <input type="text" x-model="form.name" class="input" placeholder="Ex: Plomberie">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-6">
+          <button @click="showCreate = false" class="btn-secondary">Annuler</button>
+          <button @click="create()" class="btn-primary" :disabled="saving || !form.name">
+            <span x-text="saving ? 'Ajout...' : 'Ajouter'"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Delete confirm modal -->
+  <template x-if="deleteTarget">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="deleteTarget = null">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 m-4">
+        <h2 class="text-lg font-bold mb-2">Supprimer</h2>
+        <p class="text-sm text-gray-500 mb-6">Supprimer "<span x-text="deleteTarget.name"></span>" ? Cette action est irreversible.</p>
+        <div class="flex justify-end gap-2">
+          <button @click="deleteTarget = null" class="btn-secondary">Annuler</button>
+          <button @click="remove()" class="btn-danger">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function categoriesPage() {
+  return {
+    items: [], loading: true, showCreate: false, deleteTarget: null,
+    form: { name: '' }, saving: false, formError: '',
+    async load() {
+      this.loading = true;
+      try { this.items = await Alpine.store('api').get('/categories'); }
+      catch (e) { console.error(e); }
+      this.loading = false;
+    },
+    openCreate() { this.form = { name: '' }; this.formError = ''; this.showCreate = true; },
+    async create() {
+      this.saving = true; this.formError = '';
+      try {
+        await Alpine.store('api').post('/admin/categories', this.form);
+        this.showCreate = false;
+        this.load();
+      } catch (e) { this.formError = e.message; }
+      this.saving = false;
+    },
+    confirmDelete(cat) { this.deleteTarget = cat; },
+    async remove() {
+      try {
+        await Alpine.store('api').del('/admin/categories/' + this.deleteTarget.id);
+        this.deleteTarget = null;
+        this.load();
+      } catch (e) { alert(e.message); }
+    }
+  };
+}
+</script>

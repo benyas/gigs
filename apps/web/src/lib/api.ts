@@ -144,44 +144,6 @@ export const availability = {
   provider: (id: string) => apiFetch<any[]>(`/availability/provider/${id}`, { revalidate: 60 }),
 };
 
-// Admin
-export const admin = {
-  stats: (token: string) => apiFetch<any>('/admin/stats', { token }),
-  users: (token: string, page = 1, role?: string, q?: string) => {
-    const params = new URLSearchParams({ page: String(page) });
-    if (role) params.set('role', role);
-    if (q) params.set('q', q);
-    return apiFetch<{ data: any[]; meta: any }>(`/admin/users?${params}`, { token });
-  },
-  updateUserRole: (id: string, role: string, token: string) =>
-    apiFetch<any>(`/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }), token }),
-  verifyUser: (id: string, verified: boolean, token: string) =>
-    apiFetch<any>(`/admin/users/${id}/verify`, { method: 'PATCH', body: JSON.stringify({ verified }), token }),
-  gigs: (token: string, page = 1, status?: string) => {
-    const params = new URLSearchParams({ page: String(page) });
-    if (status) params.set('status', status);
-    return apiFetch<{ data: any[]; meta: any }>(`/admin/gigs?${params}`, { token });
-  },
-  updateGigStatus: (id: string, status: string, token: string) =>
-    apiFetch<any>(`/admin/gigs/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }), token }),
-  bookings: (token: string, page = 1, status?: string) => {
-    const params = new URLSearchParams({ page: String(page) });
-    if (status) params.set('status', status);
-    return apiFetch<{ data: any[]; meta: any }>(`/admin/bookings?${params}`, { token });
-  },
-  createCategory: (data: any, token: string) =>
-    apiFetch<any>('/admin/categories', { method: 'POST', body: JSON.stringify(data), token }),
-  updateCategory: (id: string, data: any, token: string) =>
-    apiFetch<any>(`/admin/categories/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
-  deleteCategory: (id: string, token: string) =>
-    apiFetch<any>(`/admin/categories/${id}`, { method: 'DELETE', token }),
-  createCity: (data: any, token: string) =>
-    apiFetch<any>('/admin/cities', { method: 'POST', body: JSON.stringify(data), token }),
-  updateCity: (id: string, data: any, token: string) =>
-    apiFetch<any>(`/admin/cities/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
-  deleteCity: (id: string, token: string) =>
-    apiFetch<any>(`/admin/cities/${id}`, { method: 'DELETE', token }),
-};
 
 // Messaging
 export const messaging = {
@@ -215,22 +177,6 @@ export const payments = {
     apiFetch<any>(`/payments/refund/${bookingId}`, { method: 'POST', token }),
 };
 
-// Admin Payouts
-export const payouts = {
-  list: (token: string, page = 1, status?: string) => {
-    const params = new URLSearchParams({ page: String(page) });
-    if (status) params.set('status', status);
-    return apiFetch<{ data: any[]; meta: any }>(`/admin/payouts?${params}`, { token });
-  },
-  stats: (token: string) =>
-    apiFetch<any>('/admin/payouts/stats', { token }),
-  create: (providerId: string, amount: number, token: string) =>
-    apiFetch<any>('/admin/payouts', {
-      method: 'POST', body: JSON.stringify({ providerId, amount }), token,
-    }),
-  complete: (id: string, token: string) =>
-    apiFetch<any>(`/admin/payouts/${id}`, { method: 'PATCH', token }),
-};
 
 // Verification
 export const verification = {
@@ -241,15 +187,6 @@ export const verification = {
     return apiUpload<any>('/verification/upload', fd, token);
   },
   mine: (token: string) => apiFetch<any[]>('/verification/mine', { token }),
-  listAdmin: (token: string, page = 1, status?: string) => {
-    const params = new URLSearchParams({ page: String(page) });
-    if (status) params.set('status', status);
-    return apiFetch<{ data: any[]; meta: any }>(`/admin/verifications?${params}`, { token });
-  },
-  review: (id: string, approved: boolean, token: string, rejectReason?: string) =>
-    apiFetch<any>(`/admin/verifications/${id}`, {
-      method: 'PATCH', body: JSON.stringify({ approved, rejectReason }), token,
-    }),
 };
 
 // Disputes
@@ -262,15 +199,6 @@ export const disputes = {
     apiFetch<any>(`/disputes/${id}`, { token }),
   addMessage: (id: string, content: string, token: string) =>
     apiFetch<any>(`/disputes/${id}/messages`, { method: 'POST', body: JSON.stringify({ content }), token }),
-  listAdmin: (token: string, page = 1, status?: string) => {
-    const params = new URLSearchParams({ page: String(page) });
-    if (status) params.set('status', status);
-    return apiFetch<{ data: any[]; meta: any }>(`/admin/disputes?${params}`, { token });
-  },
-  resolve: (id: string, resolution: string, resolveInFavorOf: string, token: string) =>
-    apiFetch<any>(`/admin/disputes/${id}/resolve`, {
-      method: 'PATCH', body: JSON.stringify({ resolution, resolveInFavorOf }), token,
-    }),
 };
 
 // Favorites
@@ -289,14 +217,6 @@ export const coupons = {
     apiFetch<{ valid: boolean; discountAmount: number }>('/coupons/validate', {
       method: 'POST', body: JSON.stringify({ code, orderValue }), token,
     }),
-  list: (token: string, page = 1) =>
-    apiFetch<{ data: any[]; meta: any }>(`/admin/coupons?page=${page}`, { token }),
-  create: (data: any, token: string) =>
-    apiFetch<any>('/admin/coupons', { method: 'POST', body: JSON.stringify(data), token }),
-  update: (id: string, data: any, token: string) =>
-    apiFetch<any>(`/admin/coupons/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
-  remove: (id: string, token: string) =>
-    apiFetch<any>(`/admin/coupons/${id}`, { method: 'DELETE', token }),
 };
 
 // Referrals
