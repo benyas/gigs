@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import { StarRating, CategoryIcon, VerifiedBadge } from './Icons';
 
 interface GigCardProps {
   gig: {
@@ -28,10 +30,13 @@ export function GigCard({ gig }: GigCardProps) {
           overflow: 'hidden',
         }}>
           {hasImage ? (
-            <img
+            <Image
               src={gig.media![0].url}
               alt={gig.title}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 280px"
+              style={{ objectFit: 'cover' }}
+              loading="lazy"
             />
           ) : (
             <div style={{
@@ -43,7 +48,7 @@ export function GigCard({ gig }: GigCardProps) {
               justifyContent: 'center',
               gap: '0.5rem',
             }}>
-              <span style={{ fontSize: '1.5rem' }}>{gig.category?.icon}</span>
+              <CategoryIcon icon={gig.category?.icon} size={32} />
               <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
                 {gig.category?.name || 'Service'}
               </span>
@@ -134,7 +139,7 @@ export function GigCard({ gig }: GigCardProps) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem' }}>
                 {rating > 0 && (
                   <>
-                    <span style={{ color: 'var(--yellow-500)' }}>&#9733;</span>
+                    <StarRating rating={rating} size={12} />
                     <span style={{ fontWeight: 600, color: 'var(--gray-700)' }}>{rating.toFixed(1)}</span>
                     {ratingCount > 0 && (
                       <span style={{ color: 'var(--gray-400)', fontSize: '0.75rem' }}>({ratingCount})</span>
@@ -142,9 +147,7 @@ export function GigCard({ gig }: GigCardProps) {
                   </>
                 )}
                 {gig.provider.profile.isVerified && (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--primary)" style={{ marginLeft: '0.125rem' }}>
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
+                  <VerifiedBadge size={14} />
                 )}
               </div>
             </div>

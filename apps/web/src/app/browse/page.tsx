@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { GigCard } from '@/components/GigCard';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
+import { CategoryIcon, SearchIcon } from '@/components/Icons';
 import { gigs, categories as categoriesApi, cities as citiesApi } from '@/lib/api';
 import Link from 'next/link';
 
@@ -109,7 +110,7 @@ export default async function BrowsePage({ searchParams }: Props) {
               href={buildUrl({ categoryId: c.id, page: '1' })}
               className={`chip${searchParams.categoryId === c.id ? ' active' : ''}`}
             >
-              {c.icon && <span>{c.icon}</span>}
+              {c.icon && <CategoryIcon icon={c.icon} size={16} />}
               {c.name}
             </Link>
           ))}
@@ -184,7 +185,7 @@ export default async function BrowsePage({ searchParams }: Props) {
         ) : (
           <div className="card">
             <div className="empty-state">
-              <div className="empty-state-icon">&#128269;</div>
+              <div className="empty-state-icon"><SearchIcon size={48} /></div>
               <div className="empty-state-title">Aucun service trouve</div>
               <div className="empty-state-desc">
                 Essayez de modifier vos filtres ou d&apos;elargir votre recherche.

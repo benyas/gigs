@@ -1,9 +1,9 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-type FetchOptions = RequestInit & { token?: string };
+type FetchOptions = RequestInit & { token?: string; revalidate?: number | false };
 
 async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
-  const { token, ...init } = options;
+  const { token, revalidate, ...init } = options;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(init.headers as Record<string, string>),
@@ -12,10 +12,17 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T>
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_URL}/api${path}`, {
+  const fetchOptions: RequestInit & { next?: { revalidate?: number | false } } = {
     ...init,
     headers,
-  });
+  };
+
+  // Add Next.js cache revalidation for server components
+  if (revalidate !== undefined) {
+    fetchOptions.next = { revalidate };
+  }
+
+  const res = await fetch(`${API_URL}/api${path}`, fetchOptions);
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -52,23 +59,23 @@ export const auth = {
     }),
 };
 
-// Categories
+// Categories (cached 5 min — rarely changes)
 export const categories = {
-  list: () => apiFetch<any[]>('/categories'),
+  list: () => apiFetch<any[]>('/categories', { revalidate: 300 }),
 };
 
-// Cities
+// Cities (cached 5 min — rarely changes)
 export const cities = {
-  list: () => apiFetch<any[]>('/cities'),
+  list: () => apiFetch<any[]>('/cities', { revalidate: 300 }),
 };
 
 // Gigs
 export const gigs = {
   list: (params?: Record<string, string>) => {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
-    return apiFetch<{ data: any[]; meta: any }>(`/gigs${query}`);
+    return apiFetch<{ data: any[]; meta: any }>(`/gigs${query}`, { revalidate: 30 });
   },
-  getBySlug: (slug: string) => apiFetch<any>(`/gigs/${slug}`),
+  getBySlug: (slug: string) => apiFetch<any>(`/gigs/${slug}`, { revalidate: 60 }),
   mine: (token: string) => apiFetch<any[]>('/gigs/mine', { token }),
   create: (data: any, token: string) =>
     apiFetch<any>('/gigs', { method: 'POST', body: JSON.stringify(data), token }),
@@ -82,7 +89,7 @@ export const gigs = {
   deleteMedia: (gigId: string, mediaId: string, token: string) =>
     apiFetch<any>(`/gigs/${gigId}/media/${mediaId}`, { method: 'DELETE', token }),
   suggestions: (q: string) =>
-    apiFetch<any[]>(`/gigs/suggestions?q=${encodeURIComponent(q)}`),
+    apiFetch<any[]>(`/gigs/suggestions?q=${encodeURIComponent(q)}`, { revalidate: 60 }),
 };
 
 // Bookings
@@ -120,7 +127,7 @@ export const profile = {
   get: (token: string) => apiFetch<any>('/profile', { token }),
   update: (data: any, token: string) =>
     apiFetch<any>('/profile', { method: 'PATCH', body: JSON.stringify(data), token }),
-  provider: (id: string) => apiFetch<any>(`/profile/provider/${id}`),
+  provider: (id: string) => apiFetch<any>(`/profile/provider/${id}`, { revalidate: 60 }),
   stats: (token: string) => apiFetch<any>('/profile/stats', { token }),
   uploadAvatar: (file: File, token: string) => {
     const fd = new FormData();
@@ -134,7 +141,7 @@ export const availability = {
   get: (token: string) => apiFetch<any[]>('/availability', { token }),
   update: (slots: any[], token: string) =>
     apiFetch<any[]>('/availability', { method: 'PUT', body: JSON.stringify({ slots }), token }),
-  provider: (id: string) => apiFetch<any[]>(`/availability/provider/${id}`),
+  provider: (id: string) => apiFetch<any[]>(`/availability/provider/${id}`, { revalidate: 60 }),
 };
 
 // Admin

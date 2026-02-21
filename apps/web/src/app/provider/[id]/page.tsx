@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { profile as profileApi, messaging } from '@/lib/api';
+import { StarRating, VerifiedBadge } from '@/components/Icons';
 
 export default function ProviderProfilePage() {
   const params = useParams();
@@ -80,14 +81,12 @@ export default function ProviderProfilePage() {
               <div style={{ flex: 1 }}>
                 <h1 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>
                   {p?.name}
-                  {p?.isVerified && (
-                    <span style={{ color: 'var(--primary)', marginLeft: '0.5rem', fontSize: '1rem' }} title="Verifie">&#10003;</span>
-                  )}
+                  {p?.isVerified && <VerifiedBadge size={18} />}
                 </h1>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', color: '#6b7280', fontSize: '0.9rem' }}>
                   {p?.city && <span>{p.city.name}</span>}
                   <span>
-                    <span className="stars">{'★'.repeat(Math.round(p?.ratingAvg || 0))}</span>
+                    <StarRating rating={p?.ratingAvg || 0} size={14} />
                     {' '}({p?.ratingCount || 0} avis)
                   </span>
                   <span>Membre depuis {new Date(provider.memberSince).toLocaleDateString('fr-MA', { month: 'long', year: 'numeric' })}</span>
@@ -168,7 +167,7 @@ export default function ProviderProfilePage() {
               <div className="card-body">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <div>
-                    <span className="stars">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                    <StarRating rating={review.rating} size={14} />
                     {review.client?.profile && (
                       <span style={{ marginLeft: '0.5rem', fontWeight: 600 }}>
                         {review.client.profile.name}

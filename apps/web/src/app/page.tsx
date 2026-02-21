@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { GigCard } from '@/components/GigCard';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
+import { CategoryIcon } from '@/components/Icons';
 import { gigs, categories as categoriesApi, cities as citiesApi } from '@/lib/api';
 
 export default async function HomePage() {
@@ -66,7 +67,7 @@ export default async function HomePage() {
                   style={{ textDecoration: 'none', color: 'inherit' }}
                 >
                   <div className="card card-interactive" style={{ textAlign: 'center', padding: '1.75rem 1rem' }}>
-                    <div style={{ fontSize: '2.25rem', marginBottom: '0.625rem' }}>{cat.icon}</div>
+                    <div style={{ marginBottom: '0.625rem' }}><CategoryIcon icon={cat.icon} size={36} /></div>
                     <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.25rem' }}>{cat.name}</h3>
                     <p style={{ color: 'var(--gray-400)', fontSize: '0.8rem' }}>
                       {cat._count?.gigs || 0} services

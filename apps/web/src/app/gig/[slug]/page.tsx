@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { gigs, messaging } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { BookingForm } from '@/components/BookingForm';
+import { StarRating, AlertCircleIcon, VerifiedBadge } from '@/components/Icons';
 
 export default function GigDetailPage() {
   const params = useParams();
@@ -60,7 +62,7 @@ export default function GigDetailPage() {
         <div className="container">
           <div className="card">
             <div className="empty-state">
-              <div className="empty-state-icon">&#128533;</div>
+              <div className="empty-state-icon"><AlertCircleIcon size={48} /></div>
               <div className="empty-state-title">Service non trouve</div>
               <div className="empty-state-desc">Ce service n&apos;existe pas ou a ete supprime.</div>
               <Link href="/browse" className="btn btn-primary">Parcourir les services</Link>
@@ -98,10 +100,13 @@ export default function GigDetailPage() {
                     overflow: 'hidden',
                     position: 'relative',
                   }}>
-                    <img
+                    <Image
                       src={gig.media[activeImage].url}
                       alt={gig.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 640px"
+                      style={{ objectFit: 'cover' }}
+                      priority
                     />
                   </div>
                   {gig.media.length > 1 && (
@@ -110,19 +115,22 @@ export default function GigDetailPage() {
                       overflowX: 'auto', background: 'var(--gray-50)',
                     }}>
                       {gig.media.map((m: any, i: number) => (
-                        <img
+                        <Image
                           key={m.id}
                           src={m.url}
                           alt={`Photo ${i + 1}`}
+                          width={64}
+                          height={64}
                           onClick={() => setActiveImage(i)}
                           style={{
-                            width: 64, height: 64, objectFit: 'cover',
+                            objectFit: 'cover',
                             borderRadius: 'var(--radius-sm)',
                             cursor: 'pointer',
                             border: `2px solid ${i === activeImage ? 'var(--primary)' : 'transparent'}`,
                             opacity: i === activeImage ? 1 : 0.6,
                             transition: 'all 150ms ease',
                           }}
+                          loading="lazy"
                         />
                       ))}
                     </div>
@@ -167,18 +175,12 @@ export default function GigDetailPage() {
                         <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>
                           {gig.provider.profile.name}
                           {gig.provider.profile.isVerified && (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--primary)"
-                              style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 4 }}>
-                              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
+                            <VerifiedBadge size={16} />
                           )}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>
-                          <span className="stars">
-                            {'★'.repeat(Math.round(gig.provider.profile.ratingAvg))}
-                            {'☆'.repeat(5 - Math.round(gig.provider.profile.ratingAvg))}
-                          </span>
-                          {' '}({gig.provider.profile.ratingCount} avis)
+                        <div style={{ fontSize: '0.8rem', color: 'var(--gray-400)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <StarRating rating={gig.provider.profile.ratingAvg} size={13} />
+                          <span>({gig.provider.profile.ratingCount} avis)</span>
                         </div>
                       </div>
                     </Link>
@@ -234,7 +236,7 @@ export default function GigDetailPage() {
                     <div key={review.id} className="card">
                       <div className="card-body">
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
-                          <span className="stars">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                          <StarRating rating={review.rating} size={14} />
                           <span style={{ color: 'var(--gray-400)', fontSize: '0.8rem' }}>
                             {new Date(review.createdAt).toLocaleDateString('fr-MA')}
                           </span>
