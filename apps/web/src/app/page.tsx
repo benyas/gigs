@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { GigCard } from '@/components/GigCard';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { CategoryIcon } from '@/components/Icons';
+import { JsonLd, websiteJsonLd } from '@/components/JsonLd';
 import { gigs, categories as categoriesApi, cities as citiesApi } from '@/lib/api';
 
 export default async function HomePage() {
@@ -24,6 +25,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <JsonLd data={websiteJsonLd()} />
       {/* Hero */}
       <section className="hero">
         <div className="container">

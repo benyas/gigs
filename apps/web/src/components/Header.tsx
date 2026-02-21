@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@/lib/auth-context';
 import { messaging, notifications } from '@/lib/api';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function Header() {
   const { user, token, logout } = useAuth();
+  const t = useTranslations();
+  const locale = useLocale();
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -76,21 +80,21 @@ export function Header() {
         </button>
 
         <nav className={`nav-links${menuOpen ? ' open' : ''}`}>
-          <Link href="/browse" onClick={() => setMenuOpen(false)}>Parcourir</Link>
+          <Link href="/browse" onClick={() => setMenuOpen(false)}>{t('common.browse')}</Link>
 
           {user ? (
             <>
               {isAdmin && (
                 <Link href="/admin" onClick={() => setMenuOpen(false)}
                   style={{ color: 'var(--red-500)', fontWeight: 600 }}>
-                  Admin
+                  {t('nav.admin')}
                 </Link>
               )}
 
               {isProvider && (
                 <>
                   <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
-                    Tableau de bord
+                    {t('common.dashboard')}
                   </Link>
                   <Link href="/create-gig" className="btn btn-primary btn-sm"
                     onClick={() => setMenuOpen(false)}>
@@ -101,7 +105,7 @@ export function Header() {
 
               {isClient && (
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
-                  Mes reservations
+                  {t('nav.myBookings')}
                 </Link>
               )}
 
@@ -112,7 +116,7 @@ export function Header() {
                   strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
                 </svg>
-                Messages
+                {t('nav.messages')}
                 {unreadMessages > 0 && (
                   <span className="nav-badge">
                     {unreadMessages > 9 ? '9+' : unreadMessages}
@@ -122,7 +126,7 @@ export function Header() {
 
               {/* Notifications bell */}
               <div style={{ position: 'relative' }}>
-                <button onClick={toggleNotifs} className="notif-bell" aria-label="Notifications">
+                <button onClick={toggleNotifs} className="notif-bell" aria-label={t('nav.notifications')}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -138,7 +142,7 @@ export function Header() {
                 {showNotifs && (
                   <div className="notif-dropdown">
                     <div className="notif-dropdown-header">
-                      <h3>Notifications</h3>
+                      <h3>{t('nav.notifications')}</h3>
                       {unreadNotifs > 0 && (
                         <button onClick={markAllRead} className="btn btn-ghost btn-sm"
                           style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>
@@ -148,7 +152,7 @@ export function Header() {
                     </div>
                     {notifList.length === 0 ? (
                       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--gray-400)', fontSize: '0.85rem' }}>
-                        Aucune notification
+                        {t('common.noResults')}
                       </div>
                     ) : (
                       notifList.slice(0, 10).map((n) => (
@@ -161,7 +165,7 @@ export function Header() {
                           <div className="notif-item-title">{n.title}</div>
                           <div className="notif-item-body">{n.body.slice(0, 80)}</div>
                           <div className="notif-item-time">
-                            {new Date(n.createdAt).toLocaleDateString('fr-MA')}
+                            {new Date(n.createdAt).toLocaleDateString(locale)}
                           </div>
                         </Link>
                       ))
@@ -179,19 +183,22 @@ export function Header() {
                 </span>
               </Link>
 
+              <LanguageSwitcher current={locale} />
+
               <button onClick={logout} className="btn btn-outline btn-sm">
-                Deconnexion
+                {t('common.logout')}
               </button>
             </>
           ) : (
             <>
+              <LanguageSwitcher current={locale} />
               <Link href="/auth/login" className="btn btn-outline btn-sm"
                 onClick={() => setMenuOpen(false)}>
-                Connexion
+                {t('common.login')}
               </Link>
               <Link href="/auth/register" className="btn btn-primary btn-sm"
                 onClick={() => setMenuOpen(false)}>
-                Inscription
+                {t('common.register')}
               </Link>
             </>
           )}

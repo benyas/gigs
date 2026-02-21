@@ -17,6 +17,15 @@ import { AdminModule } from './admin/admin.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AvailabilityModule } from './availability/availability.module';
+import { HealthModule } from './health/health.module';
+import { PaymentsModule } from './payments/payments.module';
+import { VerificationModule } from './verification/verification.module';
+import { DisputesModule } from './disputes/disputes.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { PushModule } from './push/push.module';
+import { CouponsModule } from './coupons/coupons.module';
+import { ReferralsModule } from './referrals/referrals.module';
+import { PortfolioModule } from './portfolio/portfolio.module';
 
 @Module({
   imports: [
@@ -53,6 +62,15 @@ import { AvailabilityModule } from './availability/availability.module';
     MessagingModule,
     NotificationsModule,
     AvailabilityModule,
+    HealthModule,
+    PaymentsModule,
+    VerificationModule,
+    DisputesModule,
+    FavoritesModule,
+    PushModule,
+    CouponsModule,
+    ReferralsModule,
+    PortfolioModule,
   ],
   providers: [
     {

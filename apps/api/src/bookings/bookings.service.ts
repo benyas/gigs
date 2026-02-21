@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PaymentsService } from '../payments/payments.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import type { CreateBookingInput } from '@gigs/shared';
@@ -13,6 +14,7 @@ import type { CreateBookingInput } from '@gigs/shared';
 export class BookingsService {
   constructor(
     private prisma: PrismaService,
+    private payments: PaymentsService,
     @InjectQueue('notifications') private notifQueue: Queue,
   ) {}
 
@@ -105,6 +107,11 @@ export class BookingsService {
       bookingId: updated.id,
       status,
     });
+
+    // Release escrow when booking is completed
+    if (status === 'completed') {
+      await this.payments.releaseEscrow(bookingId);
+    }
 
     return updated;
   }

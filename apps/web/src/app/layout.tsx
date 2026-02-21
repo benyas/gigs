@@ -1,10 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
 import { AuthProvider } from '@/lib/auth-context';
+import { isRtl } from '@/i18n/config';
+import type { Locale } from '@/i18n/config';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -44,20 +48,26 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale() as Locale;
+  const messages = await getMessages();
+  const rtl = isRtl(locale);
+
   return (
-    <html lang="fr" className={inter.className}>
+    <html lang={locale} dir={rtl ? 'rtl' : 'ltr'} className={inter.className}>
       <body>
-        <AuthProvider>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <ServiceWorkerRegistrar />
-        </AuthProvider>
+        <NextIntlClientProvider messages={messages}>
+          <AuthProvider>
+            <Header />
+            <main>{children}</main>
+            <Footer />
+            <ServiceWorkerRegistrar />
+          </AuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

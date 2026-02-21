@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gigs
+          POSTGRES_PASSWORD: gigs
+          POSTGRES_DB: gigs_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://gigs:gigs@localhost:5432/gigs_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: ci-test-secret
+      MINIO_ENDPOINT: localhost
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: gigs-test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @gigs/shared build
+
+      - name: Typecheck API
+        run: pnpm --filter @gigs/api lint
+
+      - name: Typecheck Web
+        run: pnpm --filter @gigs/web lint
+
+      - name: Generate Prisma client
+        run: pnpm --filter @gigs/api exec prisma generate
+
+      - name: Run database migrations
+        run: pnpm --filter @gigs/api exec prisma migrate deploy
+
+      - name: Run API tests
+        run: pnpm --filter @gigs/api test
+
+      - name: Build API
+        run: pnpm --filter @gigs/api build
+
+      - name: Build Web
+        run: pnpm --filter @gigs/web build

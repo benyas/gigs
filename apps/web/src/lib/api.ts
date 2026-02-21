@@ -201,6 +201,137 @@ export const messaging = {
     apiFetch<number>('/messaging/unread', { token }),
 };
 
+// Payments & Wallet
+export const payments = {
+  initiate: (bookingId: string, token: string) =>
+    apiFetch<{ paymentUrl: string; orderId: string }>('/payments/initiate', {
+      method: 'POST', body: JSON.stringify({ bookingId }), token,
+    }),
+  wallet: (token: string) =>
+    apiFetch<{ balance: number; pendingBalance: number; totalEarned: number }>('/wallet', { token }),
+  transactions: (token: string, page = 1) =>
+    apiFetch<{ data: any[]; meta: any }>(`/wallet/transactions?page=${page}`, { token }),
+  refund: (bookingId: string, token: string) =>
+    apiFetch<any>(`/payments/refund/${bookingId}`, { method: 'POST', token }),
+};
+
+// Admin Payouts
+export const payouts = {
+  list: (token: string, page = 1, status?: string) => {
+    const params = new URLSearchParams({ page: String(page) });
+    if (status) params.set('status', status);
+    return apiFetch<{ data: any[]; meta: any }>(`/admin/payouts?${params}`, { token });
+  },
+  stats: (token: string) =>
+    apiFetch<any>('/admin/payouts/stats', { token }),
+  create: (providerId: string, amount: number, token: string) =>
+    apiFetch<any>('/admin/payouts', {
+      method: 'POST', body: JSON.stringify({ providerId, amount }), token,
+    }),
+  complete: (id: string, token: string) =>
+    apiFetch<any>(`/admin/payouts/${id}`, { method: 'PATCH', token }),
+};
+
+// Verification
+export const verification = {
+  upload: (file: File, type: string, token: string) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('type', type);
+    return apiUpload<any>('/verification/upload', fd, token);
+  },
+  mine: (token: string) => apiFetch<any[]>('/verification/mine', { token }),
+  listAdmin: (token: string, page = 1, status?: string) => {
+    const params = new URLSearchParams({ page: String(page) });
+    if (status) params.set('status', status);
+    return apiFetch<{ data: any[]; meta: any }>(`/admin/verifications?${params}`, { token });
+  },
+  review: (id: string, approved: boolean, token: string, rejectReason?: string) =>
+    apiFetch<any>(`/admin/verifications/${id}`, {
+      method: 'PATCH', body: JSON.stringify({ approved, rejectReason }), token,
+    }),
+};
+
+// Disputes
+export const disputes = {
+  create: (bookingId: string, reason: string, token: string) =>
+    apiFetch<any>('/disputes', { method: 'POST', body: JSON.stringify({ bookingId, reason }), token }),
+  list: (token: string, page = 1) =>
+    apiFetch<{ data: any[]; meta: any }>(`/disputes?page=${page}`, { token }),
+  get: (id: string, token: string) =>
+    apiFetch<any>(`/disputes/${id}`, { token }),
+  addMessage: (id: string, content: string, token: string) =>
+    apiFetch<any>(`/disputes/${id}/messages`, { method: 'POST', body: JSON.stringify({ content }), token }),
+  listAdmin: (token: string, page = 1, status?: string) => {
+    const params = new URLSearchParams({ page: String(page) });
+    if (status) params.set('status', status);
+    return apiFetch<{ data: any[]; meta: any }>(`/admin/disputes?${params}`, { token });
+  },
+  resolve: (id: string, resolution: string, resolveInFavorOf: string, token: string) =>
+    apiFetch<any>(`/admin/disputes/${id}/resolve`, {
+      method: 'PATCH', body: JSON.stringify({ resolution, resolveInFavorOf }), token,
+    }),
+};
+
+// Favorites
+export const favorites = {
+  toggle: (gigId: string, token: string) =>
+    apiFetch<{ favorited: boolean }>(`/favorites/${gigId}`, { method: 'POST', token }),
+  list: (token: string, page = 1) =>
+    apiFetch<{ data: any[]; meta: any }>(`/favorites?page=${page}`, { token }),
+  check: (gigId: string, token: string) =>
+    apiFetch<{ favorited: boolean }>(`/favorites/${gigId}/check`, { token }),
+};
+
+// Coupons
+export const coupons = {
+  validate: (code: string, orderValue: number, token: string) =>
+    apiFetch<{ valid: boolean; discountAmount: number }>('/coupons/validate', {
+      method: 'POST', body: JSON.stringify({ code, orderValue }), token,
+    }),
+};
+
+// Referrals
+export const referrals = {
+  getCode: (token: string) =>
+    apiFetch<{ code: string }>('/referrals/code', { token }),
+  apply: (code: string, token: string) =>
+    apiFetch<any>('/referrals/apply', { method: 'POST', body: JSON.stringify({ code }), token }),
+  mine: (token: string) =>
+    apiFetch<any>('/referrals', { token }),
+};
+
+// Portfolio
+export const portfolio = {
+  list: (providerId: string) =>
+    apiFetch<any[]>(`/portfolio/${providerId}`, { revalidate: 60 }),
+  create: (file: File, title: string, description: string, token: string) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('title', title);
+    fd.append('description', description);
+    return apiUpload<any>('/portfolio', fd, token);
+  },
+  update: (id: string, data: { title?: string; description?: string; sortOrder?: number }, token: string) =>
+    apiFetch<any>(`/portfolio/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
+  remove: (id: string, token: string) =>
+    apiFetch<any>(`/portfolio/${id}`, { method: 'DELETE', token }),
+};
+
+// Invoices
+export const invoices = {
+  download: (bookingId: string, token: string) =>
+    `${API_URL}/api/bookings/${bookingId}/invoice?token=${token}`,
+};
+
+// Calendar
+export const calendar = {
+  bookingIcs: (bookingId: string, token: string) =>
+    `${API_URL}/api/bookings/${bookingId}/calendar?token=${token}`,
+  scheduleIcs: (token: string) =>
+    `${API_URL}/api/availability/export?token=${token}`,
+};
+
 // Notifications
 export const notifications = {
   list: (token: string, page = 1) =>

@@ -11,7 +11,9 @@
     "db:migrate": "pnpm --filter @gigs/api run db:migrate",
     "db:seed": "pnpm --filter @gigs/api run db:seed",
     "db:studio": "pnpm --filter @gigs/api run db:studio",
-    "search:sync": "pnpm --filter @gigs/api run search:sync"
+    "search:sync": "pnpm --filter @gigs/api run search:sync",
+    "test": "pnpm --filter @gigs/api run test",
+    "test:cov": "pnpm --filter @gigs/api run test:cov"
   },
   "engines": {
     "node": ">=20",

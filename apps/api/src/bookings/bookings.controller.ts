@@ -6,10 +6,14 @@ import {
   Param,
   Body,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
 import { BookingsService } from './bookings.service';
+import { InvoiceService } from './invoice.service';
+import { CalendarService } from './calendar.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
@@ -23,7 +27,11 @@ import {
 @Controller('bookings')
 @UseGuards(AuthGuard('jwt'))
 export class BookingsController {
-  constructor(private bookingsService: BookingsService) {}
+  constructor(
+    private bookingsService: BookingsService,
+    private invoiceService: InvoiceService,
+    private calendarService: CalendarService,
+  ) {}
 
   @Get()
   findMine(
@@ -59,5 +67,32 @@ export class BookingsController {
     @Body() body: { reason?: string },
   ) {
     return this.bookingsService.cancel(id, userId, body.reason);
+  }
+
+  @Get(':id/invoice')
+  async invoice(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const pdf = await this.invoiceService.generateInvoice(id);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="invoice-${id}.pdf"`,
+      'Content-Length': pdf.length,
+    });
+    res.end(pdf);
+  }
+
+  @Get(':id/calendar')
+  async calendar(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const ics = await this.calendarService.getBookingIcs(id);
+    res.set({
+      'Content-Type': 'text/calendar; charset=utf-8',
+      'Content-Disposition': `attachment; filename="booking-${id}.ics"`,
+    });
+    res.send(ics);
   }
 }

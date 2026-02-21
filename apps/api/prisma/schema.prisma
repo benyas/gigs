@@ -29,6 +29,40 @@ enum BookingStatus {
   disputed
 }
 
+enum TransactionType {
+  charge
+  refund
+  payout
+  platform_fee
+}
+
+enum TransactionStatus {
+  pending
+  completed
+  failed
+}
+
+enum PayoutStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum DisputeStatus {
+  open
+  under_review
+  resolved_client
+  resolved_provider
+  closed
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   phone        String   @unique
@@ -48,6 +82,16 @@ model User {
   sentMessages    Message[]       @relation("SentMessages")
   notifications   Notification[]
   availability    Availability[]
+  wallet          Wallet?
+  transactions    Transaction[]
+  payouts         Payout[]
+  verificationDocs VerificationDocument[]
+  disputes        Dispute[]
+  favorites       Favorite[]
+  pushSubscriptions PushSubscription[]
+  referralsMade    Referral[]  @relation("Referrals")
+  referredBy       Referral?   @relation("ReferredBy")
+  portfolioItems   PortfolioItem[]
 
   @@index([role])
   @@index([createdAt])
@@ -64,6 +108,7 @@ model Profile {
   isVerified Boolean @default(false) @map("is_verified")
   ratingAvg  Float   @default(0) @map("rating_avg")
   ratingCount Int    @default(0) @map("rating_count")
+  badges      Json?  @default("[]")
 
   user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   city City? @relation(fields: [cityId], references: [id])
@@ -114,6 +159,7 @@ model Gig {
   city      City      @relation(fields: [cityId], references: [id])
   media     GigMedia[]
   bookings  Booking[]
+  favorites Favorite[]
 
   @@index([providerId])
   @@index([categoryId])
@@ -145,6 +191,9 @@ model Booking {
   notes        String?       @db.Text
   status       BookingStatus @default(pending)
   totalPrice   Float         @map("total_price")
+  discountAmount Float?      @map("discount_amount")
+  couponCode   String?       @map("coupon_code")
+  invoiceNumber Int?         @unique @map("invoice_number")
   cancelReason String?       @map("cancel_reason") @db.Text
   cancelledBy  String?       @map("cancelled_by") @db.Uuid
   cancelledAt  DateTime?     @map("cancelled_at")
@@ -155,6 +204,8 @@ model Booking {
   client       User          @relation("ClientBookings", fields: [clientId], references: [id])
   review       Review?
   conversation Conversation?
+  transactions Transaction[]
+  dispute      Dispute?
 
   @@index([gigId])
   @@index([clientId])
@@ -251,4 +302,181 @@ model Availability {
   @@unique([providerId, dayOfWeek])
   @@index([providerId])
   @@map("availabilities")
+}
+
+model Wallet {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  balance        Float    @default(0)
+  pendingBalance Float    @default(0) @map("pending_balance")
+  totalEarned    Float    @default(0) @map("total_earned")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id          String            @id @default(uuid()) @db.Uuid
+  bookingId   String?           @map("booking_id") @db.Uuid
+  userId      String            @map("user_id") @db.Uuid
+  type        TransactionType
+  status      TransactionStatus @default(pending)
+  amount      Float
+  platformFee Float?            @map("platform_fee")
+  cmiOrderId  String?           @map("cmi_order_id")
+  metadata    Json?
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@index([bookingId])
+  @@index([userId])
+  @@index([type, status])
+  @@index([cmiOrderId])
+  @@map("transactions")
+}
+
+model Payout {
+  id          String       @id @default(uuid()) @db.Uuid
+  providerId  String       @map("provider_id") @db.Uuid
+  amount      Float
+  status      PayoutStatus @default(pending)
+  processedBy String?      @map("processed_by") @db.Uuid
+  processedAt DateTime?    @map("processed_at")
+  bankDetails Json?        @map("bank_details")
+  notes       String?      @db.Text
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  provider User @relation(fields: [providerId], references: [id])
+
+  @@index([providerId])
+  @@index([status])
+  @@map("payouts")
+}
+
+model VerificationDocument {
+  id           String             @id @default(uuid()) @db.Uuid
+  userId       String             @map("user_id") @db.Uuid
+  type         String             // "cin", "business_license", "diploma"
+  fileUrl      String             @map("file_url")
+  status       VerificationStatus @default(pending)
+  reviewedBy   String?            @map("reviewed_by") @db.Uuid
+  reviewedAt   DateTime?          @map("reviewed_at")
+  rejectReason String?            @map("reject_reason") @db.Text
+  createdAt    DateTime           @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("verification_documents")
+}
+
+model Dispute {
+  id          String        @id @default(uuid()) @db.Uuid
+  bookingId   String        @unique @map("booking_id") @db.Uuid
+  initiatorId String        @map("initiator_id") @db.Uuid
+  reason      String        @db.Text
+  status      DisputeStatus @default(open)
+  resolution  String?       @db.Text
+  resolvedBy  String?       @map("resolved_by") @db.Uuid
+  resolvedAt  DateTime?     @map("resolved_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  booking  Booking          @relation(fields: [bookingId], references: [id])
+  initiator User            @relation(fields: [initiatorId], references: [id])
+  messages DisputeMessage[]
+
+  @@index([status])
+  @@map("disputes")
+}
+
+model DisputeMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  disputeId String   @map("dispute_id") @db.Uuid
+  senderId  String   @map("sender_id") @db.Uuid
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  dispute Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  @@index([disputeId])
+  @@map("dispute_messages")
+}
+
+model Favorite {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  gigId     String   @map("gig_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gig  Gig  @relation(fields: [gigId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gigId])
+  @@map("favorites")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String   @db.Text
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+model Coupon {
+  id            String    @id @default(uuid()) @db.Uuid
+  code          String    @unique
+  discountType  String    @map("discount_type") // "percentage" or "fixed"
+  discountValue Float     @map("discount_value")
+  maxUses       Int?      @map("max_uses")
+  usedCount     Int       @default(0) @map("used_count")
+  minOrderValue Float?    @map("min_order_value")
+  expiresAt     DateTime? @map("expires_at")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("coupons")
+}
+
+model Referral {
+  id           String    @id @default(uuid()) @db.Uuid
+  referrerId   String    @map("referrer_id") @db.Uuid
+  referredId   String?   @unique @map("referred_id") @db.Uuid
+  code         String    @unique
+  rewardAmount Float     @default(0) @map("reward_amount")
+  rewardPaid   Boolean   @default(false) @map("reward_paid")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  referrer User  @relation("Referrals", fields: [referrerId], references: [id])
+  referred User? @relation("ReferredBy", fields: [referredId], references: [id])
+
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+model PortfolioItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  providerId  String   @map("provider_id") @db.Uuid
+  title       String
+  description String?  @db.Text
+  imageUrl    String   @map("image_url")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  provider User @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+  @@map("portfolio_items")
 }

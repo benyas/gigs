@@ -13,7 +13,10 @@
     "db:migrate:prod": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "search:sync": "tsx src/scripts/sync-meilisearch.ts"
+    "search:sync": "tsx src/scripts/sync-meilisearch.ts",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.995.0",
@@ -34,11 +37,14 @@
     "ioredis": "^5.4.0",
     "meilisearch": "^0.43.0",
     "multer": "^2.0.2",
+    "nodemailer": "^8.0.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdfkit": "^0.17.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "slugify": "^1.6.6",
+    "web-push": "^3.6.7",
     "zod": "^3.23.0"
   },
   "prisma": {
@@ -47,12 +53,19 @@
   "devDependencies": {
     "@nestjs/cli": "^10.4.0",
     "@nestjs/schematics": "^10.1.0",
+    "@nestjs/testing": "^10.4.22",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^22.0.0",
+    "@types/nodemailer": "^7.0.11",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pdfkit": "^0.17.5",
+    "@types/web-push": "^3.6.4",
+    "jest": "^30.2.0",
     "prisma": "^5.20.0",
+    "ts-jest": "^29.4.6",
     "tsx": "^4.19.0",
     "typescript": "^5.5.0"
   }
