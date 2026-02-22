@@ -54,11 +54,23 @@ export const auth = {
     apiFetch<{ user: any; token: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
+      credentials: 'include',
     }),
   register: (data: { email: string; password: string; name: string; phone: string; role: string }) =>
     apiFetch<{ user: any; token: string }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
+      credentials: 'include',
+    }),
+  refresh: () =>
+    apiFetch<{ user: any; token: string }>('/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    }),
+  logout: () =>
+    apiFetch<{ message: string }>('/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
     }),
 };
 

@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { StripSecretsInterceptor } from './common/interceptors/strip-secrets.interceptor';
@@ -17,6 +18,9 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create(AppModule);
+
+  // Cookie parser (for httpOnly refresh tokens)
+  app.use(cookieParser());
 
   // Security headers
   app.use(helmet({

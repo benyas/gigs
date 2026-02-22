@@ -184,6 +184,45 @@ export class AuthService {
     };
   }
 
+  signAccessToken(userId: string, role: string): string {
+    return this.jwt.sign({ sub: userId, role }, { expiresIn: '15m' });
+  }
+
+  signRefreshToken(userId: string): string {
+    return this.jwt.sign({ sub: userId, type: 'refresh' }, { expiresIn: '30d' });
+  }
+
+  async refreshFromToken(refreshToken: string) {
+    try {
+      const payload = this.jwt.verify(refreshToken);
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        include: { profile: true },
+      });
+
+      if (!user) throw new UnauthorizedException('User not found');
+
+      const accessToken = this.signAccessToken(user.id, user.role);
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          profile: user.profile,
+        },
+        token: accessToken,
+      };
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
   private signToken(userId: string, role: string): string {
     return this.jwt.sign({ sub: userId, role });
   }
