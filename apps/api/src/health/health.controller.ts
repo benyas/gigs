@@ -1,9 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
+import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('health')
 export class HealthController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject('REDIS_CLIENT') private redis: Redis,
+  ) {}
 
   @Get()
   async check() {
@@ -15,6 +19,23 @@ export class HealthController {
       checks.database = 'ok';
     } catch {
       checks.database = 'error';
+    }
+
+    // Redis check
+    try {
+      const pong = await this.redis.ping();
+      checks.redis = pong === 'PONG' ? 'ok' : 'error';
+    } catch {
+      checks.redis = 'error';
+    }
+
+    // Meilisearch check
+    try {
+      const msHost = process.env.MEILISEARCH_HOST || 'http://localhost:7700';
+      const res = await fetch(`${msHost}/health`);
+      checks.meilisearch = res.ok ? 'ok' : 'error';
+    } catch {
+      checks.meilisearch = 'error';
     }
 
     const allOk = Object.values(checks).every((v) => v === 'ok');

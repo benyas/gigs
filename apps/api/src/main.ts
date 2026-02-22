@@ -17,7 +17,10 @@ async function bootstrap() {
     }
   }
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // JSON logging in production for structured log aggregation
+    ...(isProduction && { logger: ['error', 'warn', 'log'] }),
+  });
 
   // Cookie parser (for httpOnly refresh tokens)
   app.use(cookieParser());
