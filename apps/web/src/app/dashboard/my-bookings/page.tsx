@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { bookings as bookingsApi, reviews as reviewsApi } from '@/lib/api';
+import { bookings as bookingsApi, reviews as reviewsApi, payments, disputes } from '@/lib/api';
 import { ReviewForm } from '@/components/ReviewForm';
 
 export default function MyBookingsPage() {
@@ -141,6 +141,22 @@ export default function MyBookingsPage() {
                       <span className={`badge ${statusBadge[booking.status] || 'badge-yellow'}`}>
                         {statusLabels[booking.status] || booking.status}
                       </span>
+                      {isClient && booking.status === 'accepted' && (
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={async () => {
+                            try {
+                              const res = await payments.initiate(booking.id, token!);
+                              window.location.href = res.paymentUrl;
+                            } catch (err: any) {
+                              alert(err.message || 'Erreur de paiement');
+                            }
+                          }}
+                          style={{ fontSize: '0.8rem' }}
+                        >
+                          Payer maintenant
+                        </button>
+                      )}
                       {canCancel && (
                         <button
                           className="btn btn-outline btn-sm"
@@ -157,6 +173,25 @@ export default function MyBookingsPage() {
                           style={{ fontSize: '0.8rem' }}
                         >
                           Laisser un avis
+                        </button>
+                      )}
+                      {isClient && ['completed', 'in_progress'].includes(booking.status) && !booking.dispute && (
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={async () => {
+                            const reason = prompt('Decrivez le probleme :');
+                            if (!reason?.trim()) return;
+                            try {
+                              await disputes.create(booking.id, reason.trim(), token!);
+                              alert('Litige ouvert. Consultez la page Litiges pour suivre.');
+                              loadBookings();
+                            } catch (err: any) {
+                              alert(err.message || 'Erreur');
+                            }
+                          }}
+                          style={{ fontSize: '0.8rem' }}
+                        >
+                          Signaler un probleme
                         </button>
                       )}
                     </div>

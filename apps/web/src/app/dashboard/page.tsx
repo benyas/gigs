@@ -101,9 +101,13 @@ export default function DashboardPage() {
             Messages
           </Link>
           <Link href="/dashboard/my-bookings" className="btn btn-outline btn-sm">Mes reservations</Link>
+          <Link href="/dashboard/favorites" className="btn btn-outline btn-sm">Favoris</Link>
           {isProvider && <Link href="/dashboard/gigs" className="btn btn-outline btn-sm">Mes services</Link>}
           {isProvider && <Link href="/dashboard/analytics" className="btn btn-outline btn-sm">Statistiques</Link>}
           {isProvider && <Link href="/dashboard/availability" className="btn btn-outline btn-sm">Disponibilites</Link>}
+          {isProvider && <Link href="/dashboard/portfolio" className="btn btn-outline btn-sm">Portfolio</Link>}
+          {isProvider && <Link href="/dashboard/verification" className="btn btn-outline btn-sm">Verification</Link>}
+          <Link href="/dashboard/referrals" className="btn btn-outline btn-sm">Parrainage</Link>
           <Link href="/dashboard/settings" className="btn btn-outline btn-sm">Parametres</Link>
         </div>
 

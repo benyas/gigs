@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { StarRating, CategoryIcon, VerifiedBadge } from './Icons';
+import { FavoriteButton } from './FavoriteButton';
 
 interface GigCardProps {
   gig: {
+    id?: string;
     slug: string;
     title: string;
     description: string;
@@ -52,6 +54,12 @@ export function GigCard({ gig }: GigCardProps) {
               <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
                 {gig.category?.name || 'Service'}
               </span>
+            </div>
+          )}
+          {/* Favorite button overlay */}
+          {gig.id && (
+            <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2 }}>
+              <FavoriteButton gigId={gig.id} size={18} />
             </div>
           )}
           {/* Price badge overlay */}

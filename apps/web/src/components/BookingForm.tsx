@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { bookings } from '@/lib/api';
+import { bookings, coupons } from '@/lib/api';
 
 interface BookingFormProps {
   gigId: string;
@@ -20,6 +20,10 @@ export function BookingForm({ gigId, basePrice }: BookingFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponMsg, setCouponMsg] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   if (!user || !token) {
     return (
@@ -149,6 +153,76 @@ export function BookingForm({ gigId, basePrice }: BookingFormProps) {
               rows={3}
             />
           </div>
+
+          {/* Coupon code */}
+          <div className="form-group">
+            <label>Code promo (optionnel)</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                className="form-input"
+                value={couponCode}
+                onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponDiscount(0); setCouponMsg(''); }}
+                placeholder="PROMO2025"
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                disabled={validatingCoupon || !couponCode.trim()}
+                onClick={async () => {
+                  setValidatingCoupon(true);
+                  setCouponMsg('');
+                  try {
+                    const res = await coupons.validate(couponCode.trim(), basePrice, token!);
+                    if (res.valid) {
+                      setCouponDiscount(res.discountAmount);
+                      setCouponMsg(`-${res.discountAmount} MAD`);
+                    } else {
+                      setCouponMsg('Code invalide');
+                    }
+                  } catch {
+                    setCouponMsg('Code invalide');
+                  }
+                  setValidatingCoupon(false);
+                }}
+              >
+                {validatingCoupon ? '...' : 'Appliquer'}
+              </button>
+            </div>
+            {couponMsg && (
+              <div style={{
+                fontSize: '0.8rem', marginTop: '0.375rem',
+                color: couponDiscount > 0 ? 'var(--green-600, #16a34a)' : 'var(--red-500, #ef4444)',
+                fontWeight: 500,
+              }}>
+                {couponMsg}
+              </div>
+            )}
+          </div>
+
+          {/* Price summary */}
+          {couponDiscount > 0 && (
+            <div style={{
+              padding: '0.75rem', marginBottom: '1rem',
+              background: 'var(--green-50, #f0fdf4)', borderRadius: 'var(--radius)',
+              fontSize: '0.875rem',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                <span>Prix de base</span>
+                <span>{basePrice} MAD</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', color: 'var(--green-600, #16a34a)' }}>
+                <span>Reduction</span>
+                <span>-{couponDiscount} MAD</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: '1px solid var(--border-light)', paddingTop: '0.375rem', marginTop: '0.25rem' }}>
+                <span>Total</span>
+                <span>{Math.max(0, basePrice - couponDiscount)} MAD</span>
+              </div>
+            </div>
+          )}
+
           <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
             {loading ? 'Envoi...' : 'Confirmer la reservation'}
           </button>
