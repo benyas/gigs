@@ -17,27 +17,27 @@ export class NotificationsController {
 
   @Get()
   list(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
     @Query('page') page?: string,
   ) {
     return this.notificationsService.list(userId, page ? parseInt(page) : 1);
   }
 
   @Get('unread-count')
-  getUnreadCount(@CurrentUser('sub') userId: string) {
+  getUnreadCount(@CurrentUser('id') userId: string) {
     return this.notificationsService.getUnreadCount(userId);
   }
 
   @Patch(':id/read')
   markAsRead(
     @Param('id') id: string,
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.notificationsService.markAsRead(id, userId);
   }
 
   @Patch('read-all')
-  markAllAsRead(@CurrentUser('sub') userId: string) {
+  markAllAsRead(@CurrentUser('id') userId: string) {
     return this.notificationsService.markAllAsRead(userId);
   }
 }

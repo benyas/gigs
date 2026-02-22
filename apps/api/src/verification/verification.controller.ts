@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles, RolesGuard } from '../common/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { VerificationService } from './verification.service';
 
@@ -39,6 +39,7 @@ export class VerificationController {
 
   @Get('admin/verifications')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
   async listVerifications(
     @Query('page') page?: string,
     @Query('status') status?: string,
@@ -48,6 +49,7 @@ export class VerificationController {
 
   @Patch('admin/verifications/:id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
   async review(
     @Param('id') id: string,
     @Body() body: { approved: boolean; rejectReason?: string },

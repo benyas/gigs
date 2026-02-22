@@ -19,16 +19,21 @@ function build() {
     const title = titleMatch ? titleMatch[1] : 'Admin';
     const activePage = file.replace('.html', '');
 
+    const apiUrl = process.env.API_URL || 'http://localhost:4000';
     let html = layout
       .replace('{{content}}', content)
       .replace(/\{\{title\}\}/g, title)
-      .replace(/\{\{activePage\}\}/g, activePage);
+      .replace(/\{\{activePage\}\}/g, activePage)
+      .replace(/\{\{api_url\}\}/g, apiUrl);
     fs.writeFileSync(path.join(PUBLIC, file), html);
   }
 
-  // Build login separately (standalone, no layout)
+  // Build login separately (standalone, no layout) — still needs api_url replacement
   if (fs.existsSync(path.join(PAGES, 'login.html'))) {
-    fs.copyFileSync(path.join(PAGES, 'login.html'), path.join(PUBLIC, 'login.html'));
+    const loginApiUrl = process.env.API_URL || 'http://localhost:4000';
+    let loginHtml = fs.readFileSync(path.join(PAGES, 'login.html'), 'utf8');
+    loginHtml = loginHtml.replace(/\{\{api_url\}\}/g, loginApiUrl);
+    fs.writeFileSync(path.join(PUBLIC, 'login.html'), loginHtml);
   }
 
   // Copy JS files

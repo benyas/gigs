@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles, RolesGuard } from '../common/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { DisputesService } from './disputes.service';
 
@@ -56,6 +56,7 @@ export class DisputesController {
 
   @Get('admin/disputes')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
   async listAll(
     @Query('page') page?: string,
     @Query('status') status?: string,
@@ -65,6 +66,7 @@ export class DisputesController {
 
   @Patch('admin/disputes/:id/resolve')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
   async resolve(
     @Param('id') id: string,
     @Body() body: { resolution: string; resolveInFavorOf: 'client' | 'provider' },

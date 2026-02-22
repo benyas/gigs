@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:4000/api';
+const API_URL = (window.GIGS_API_URL || 'http://localhost:4000') + '/api';
 
 document.addEventListener('alpine:init', () => {
 

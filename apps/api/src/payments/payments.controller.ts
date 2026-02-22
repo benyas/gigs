@@ -10,7 +10,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles, RolesGuard } from '../common/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PaymentsService } from './payments.service';
 
@@ -56,6 +56,7 @@ export class PaymentsController {
 
   @Get('admin/payouts')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
   async listPayouts(
     @Query('page') page?: string,
     @Query('status') status?: string,
@@ -65,12 +66,14 @@ export class PaymentsController {
 
   @Get('admin/payouts/stats')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
   async payoutStats() {
     return this.payments.getPayoutStats();
   }
 
   @Post('admin/payouts')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
   async createPayout(
     @Body() body: { providerId: string; amount: number },
     @CurrentUser() user: { id: string },
@@ -80,6 +83,7 @@ export class PaymentsController {
 
   @Patch('admin/payouts/:id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
   async completePayout(
     @Param('id') id: string,
     @CurrentUser() user: { id: string },
@@ -89,6 +93,7 @@ export class PaymentsController {
 
   @Post('payments/refund/:bookingId')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
   async refund(
     @Param('bookingId') bookingId: string,
     @CurrentUser() user: { id: string },

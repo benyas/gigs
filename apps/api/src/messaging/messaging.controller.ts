@@ -17,14 +17,14 @@ export class MessagingController {
   constructor(private messagingService: MessagingService) {}
 
   @Get('conversations')
-  getConversations(@CurrentUser('sub') userId: string) {
+  getConversations(@CurrentUser('id') userId: string) {
     return this.messagingService.getConversations(userId);
   }
 
   @Get('conversations/:id/messages')
   getMessages(
     @Param('id') conversationId: string,
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
     @Query('page') page?: string,
   ) {
     return this.messagingService.getMessages(conversationId, userId, page ? parseInt(page) : 1);
@@ -33,7 +33,7 @@ export class MessagingController {
   @Post('conversations/:id/messages')
   sendMessage(
     @Param('id') conversationId: string,
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
     @Body('content') content: string,
   ) {
     return this.messagingService.sendMessage(conversationId, userId, content);
@@ -41,14 +41,14 @@ export class MessagingController {
 
   @Post('conversations')
   startConversation(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
     @Body() body: { providerId: string; message: string; bookingId?: string },
   ) {
     return this.messagingService.startConversation(userId, body.providerId, body.message, body.bookingId);
   }
 
   @Get('unread')
-  getUnreadCount(@CurrentUser('sub') userId: string) {
+  getUnreadCount(@CurrentUser('id') userId: string) {
     return this.messagingService.getUnreadCount(userId);
   }
 }

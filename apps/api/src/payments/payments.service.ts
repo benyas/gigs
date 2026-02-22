@@ -95,6 +95,12 @@ export class PaymentsService {
       return { status: 'already_processed' };
     }
 
+    // Validate callback amount matches stored transaction
+    if (data.amount && Math.abs(data.amount - tx.amount) > 0.01) {
+      this.logger.warn(`CMI callback: amount mismatch for tx=${tx.id} — expected=${tx.amount} received=${data.amount}`);
+      return { status: 'amount_mismatch' };
+    }
+
     if (data.success) {
       // Payment successful — update transaction, booking, and provider wallet
       await this.prisma.$transaction(async (prisma) => {
@@ -195,54 +201,21 @@ export class PaymentsService {
 
     const cmiResult = await this.cmi.refund(tx.cmiOrderId || '', tx.amount);
 
-    await this.prisma.$transaction(async (prisma) => {
-      // Create refund transaction
-      await prisma.transaction.create({
-        data: {
-          bookingId,
-          userId: tx.userId,
-          type: 'refund',
-          status: 'completed',
-          amount: tx.amount,
-          cmiOrderId: cmiResult.refundId,
-          metadata: { refundedBy: adminId },
-        },
-      });
-
-      // Reverse provider wallet balance
-      const providerAmount = tx.amount - (tx.platformFee || 0);
-      const wallet = await prisma.wallet.findUnique({
-        where: { userId: tx.booking!.gig.providerId },
-      });
-
-      if (wallet) {
-        // Deduct from either pending or available balance
-        if (wallet.pendingBalance >= providerAmount) {
-          await prisma.wallet.update({
-            where: { userId: tx.booking!.gig.providerId },
-            data: { pendingBalance: { decrement: providerAmount } },
-          });
-        } else {
-          await prisma.wallet.update({
-            where: { userId: tx.booking!.gig.providerId },
-            data: {
-              balance: { decrement: providerAmount },
-              totalEarned: { decrement: providerAmount },
-            },
-          });
-        }
-      }
+    // CMI refunds require manual processing — mark as pending, do NOT adjust wallet yet
+    await this.prisma.transaction.create({
+      data: {
+        bookingId,
+        userId: tx.userId,
+        type: 'refund',
+        status: 'pending',
+        amount: tx.amount,
+        cmiOrderId: cmiResult.refundId,
+        metadata: { refundedBy: adminId, manualProcessingRequired: true },
+      },
     });
 
-    // Notify client of refund
-    await this.notifQueue.add('payment-refunded', {
-      bookingId,
-      amount: tx.amount,
-      userId: tx.userId,
-    });
-
-    this.logger.log(`Refund processed: booking=${bookingId} amount=${tx.amount} by admin=${adminId}`);
-    return { success: true, amount: tx.amount };
+    this.logger.log(`Refund marked as pending manual processing: booking=${bookingId} amount=${tx.amount} by admin=${adminId}`);
+    return { success: false, status: 'refund_pending', amount: tx.amount, message: 'Refund requires manual processing via CMI portal' };
   }
 
   /**

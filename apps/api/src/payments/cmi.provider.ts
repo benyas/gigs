@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import type { PaymentProvider, PaymentInitResult, PaymentCallbackData } from './payment-provider.interface';
 
@@ -73,6 +73,7 @@ export class CmiProvider implements PaymentProvider {
 
     if (receivedHash && receivedHash !== computedHash) {
       this.logger.warn(`CMI callback hash mismatch for orderId=${orderId}`);
+      throw new UnauthorizedException('Invalid callback signature');
     }
 
     // CMI success: ProcReturnCode="00" and mdStatus in ["1", "2", "3", "4"]
@@ -89,7 +90,7 @@ export class CmiProvider implements PaymentProvider {
     // For now, we log and mark as pending manual processing.
     this.logger.log(`CMI refund requested: orderId=${orderId} amount=${amount} MAD — requires manual processing via CMI portal`);
 
-    return { success: true, refundId: `REFUND-${orderId}-${Date.now()}` };
+    return { success: false, refundId: `PENDING-REFUND-${orderId}-${Date.now()}` };
   }
 
   private generateHash(data: Record<string, string>): string {

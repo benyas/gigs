@@ -1,4 +1,7 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+// Use internal URL for server-side requests (Docker service name), public URL for browser
+const API_URL = typeof window === 'undefined'
+  ? (process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000')
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000');
 
 type FetchOptions = RequestInit & { token?: string; revalidate?: number | false };
 
