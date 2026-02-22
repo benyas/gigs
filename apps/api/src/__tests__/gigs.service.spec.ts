@@ -5,6 +5,7 @@ import { GigsService } from '../gigs/gigs.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
+import { CacheService } from '../common/cache/cache.service';
 
 describe('GigsService', () => {
   let service: GigsService;
@@ -52,6 +53,7 @@ describe('GigsService', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: StorageService, useValue: { uploadMultiple: jest.fn(), delete: jest.fn() } },
         { provide: MeilisearchService, useValue: { search: jest.fn() } },
+        { provide: CacheService, useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn(), del: jest.fn(), delPattern: jest.fn() } },
         { provide: getQueueToken('gig-indexing'), useValue: indexQueue },
       ],
     }).compile();
@@ -67,7 +69,7 @@ describe('GigsService', () => {
       const result = await service.findAll({
         page: 1,
         perPage: 12,
-      });
+      }) as any;
 
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
@@ -125,7 +127,7 @@ describe('GigsService', () => {
     it('should return a gig with relations', async () => {
       prisma.gig.findUnique.mockResolvedValue(mockGig);
 
-      const result = await service.findBySlug('plombier-casablanca');
+      const result = await service.findBySlug('plombier-casablanca') as any;
 
       expect(result.title).toBe('Plombier Casablanca');
       expect(result.provider.profile?.name).toBe('Ahmed');

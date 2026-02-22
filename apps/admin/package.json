@@ -5,8 +5,8 @@
   "scripts": {
     "build": "node build.js && npx tailwindcss -i src/css/input.css -o public/css/styles.css --minify",
     "build:css": "npx tailwindcss -i src/css/input.css -o public/css/styles.css --watch",
-    "dev": "node build.js --watch & npx tailwindcss -i src/css/input.css -o public/css/styles.css --watch & npx serve public -l 3001 --cors",
-    "preview": "npx serve public -l 3001 --cors"
+    "dev": "node build.js --watch & npx tailwindcss -i src/css/input.css -o public/css/styles.css --watch & npx serve public -l 3003 --cors",
+    "preview": "npx serve public -l 3003 --cors"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.0",

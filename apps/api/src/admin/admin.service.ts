@@ -1,12 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CacheService } from '../common/cache/cache.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cache: CacheService,
+  ) {}
 
   // --- Stats ---
   async getStats() {
+    const cached = await this.cache.get('admin:stats');
+    if (cached) return cached;
     const [users, gigs, bookings, reviews] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.gig.count(),
@@ -35,13 +41,16 @@ export class AdminService {
       },
     });
 
-    return {
+    const stats = {
       users: { total: users, clients, providers, admins },
       gigs: { total: gigs, active: activeGigs },
       bookings: { total: bookings, pending: pendingBookings, completed: completedBookings },
       reviews: { total: reviews },
       recentBookings,
     };
+
+    await this.cache.set('admin:stats', stats, 60);
+    return stats;
   }
 
   // --- Users ---
@@ -151,11 +160,15 @@ export class AdminService {
 
   // --- Categories ---
   async createCategory(data: { name: string; slug: string; icon: string }) {
-    return this.prisma.category.create({ data });
+    const cat = await this.prisma.category.create({ data });
+    await this.cache.del('categories:all');
+    return cat;
   }
 
   async updateCategory(id: string, data: { name?: string; slug?: string; icon?: string }) {
-    return this.prisma.category.update({ where: { id }, data });
+    const cat = await this.prisma.category.update({ where: { id }, data });
+    await this.cache.del('categories:all');
+    return cat;
   }
 
   async deleteCategory(id: string) {
@@ -163,16 +176,22 @@ export class AdminService {
     if (gigsCount > 0) {
       throw new NotFoundException(`Cannot delete category with ${gigsCount} active gigs`);
     }
-    return this.prisma.category.delete({ where: { id } });
+    const deleted = await this.prisma.category.delete({ where: { id } });
+    await this.cache.del('categories:all');
+    return deleted;
   }
 
   // --- Cities ---
   async createCity(data: { name: string; region: string }) {
-    return this.prisma.city.create({ data });
+    const city = await this.prisma.city.create({ data });
+    await this.cache.del('cities:all');
+    return city;
   }
 
   async updateCity(id: string, data: { name?: string; region?: string }) {
-    return this.prisma.city.update({ where: { id }, data });
+    const city = await this.prisma.city.update({ where: { id }, data });
+    await this.cache.del('cities:all');
+    return city;
   }
 
   async deleteCity(id: string) {
@@ -180,6 +199,8 @@ export class AdminService {
     if (gigsCount > 0) {
       throw new NotFoundException(`Cannot delete city with ${gigsCount} active gigs`);
     }
-    return this.prisma.city.delete({ where: { id } });
+    const deleted = await this.prisma.city.delete({ where: { id } });
+    await this.cache.del('cities:all');
+    return deleted;
   }
 }

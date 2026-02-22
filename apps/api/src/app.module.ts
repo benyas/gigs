@@ -26,9 +26,11 @@ import { PushModule } from './push/push.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { PortfolioModule } from './portfolio/portfolio.module';
+import { CacheModule } from './common/cache/cache.module';
 
 @Module({
   imports: [
+    CacheModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nest
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
+import { CacheService } from '../common/cache/cache.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import slugify from 'slugify';
@@ -15,6 +16,7 @@ export class GigsService {
     private prisma: PrismaService,
     private storage: StorageService,
     private meili: MeilisearchService,
+    private cache: CacheService,
     @InjectQueue('gig-indexing') private indexQueue: Queue,
   ) {}
 
@@ -33,6 +35,13 @@ export class GigsService {
     // Use Meilisearch when there's a text query
     if (q) {
       return this.searchWithMeilisearch(filters);
+    }
+
+    // Cache page 1 of unfiltered/simple queries for 30s
+    const cacheKey = `gigs:list:${categoryId || ''}:${cityId || ''}:${minPrice || ''}:${maxPrice || ''}:${sort || ''}:${page}:${perPage}`;
+    if (page <= 2) {
+      const cached = await this.cache.get(cacheKey);
+      if (cached) return cached;
     }
 
     const where: Record<string, unknown> = { status: 'active' };
@@ -62,7 +71,7 @@ export class GigsService {
       this.prisma.gig.count({ where }),
     ]);
 
-    return {
+    const result = {
       data,
       meta: {
         page,
@@ -71,6 +80,12 @@ export class GigsService {
         totalPages: Math.ceil(total / perPage),
       },
     };
+
+    if (page <= 2) {
+      await this.cache.set(cacheKey, result, 30);
+    }
+
+    return result;
   }
 
   private async searchWithMeilisearch(filters: GigFiltersInput) {
@@ -188,6 +203,10 @@ export class GigsService {
   }
 
   async findBySlug(slug: string) {
+    const cacheKey = `gig:slug:${slug}`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
     const gig = await this.prisma.gig.findUnique({
       where: { slug },
       include: {
@@ -210,6 +229,7 @@ export class GigsService {
       throw new NotFoundException('Gig not found');
     }
 
+    await this.cache.set(cacheKey, gig, 300);
     return gig;
   }
 
@@ -241,6 +261,7 @@ export class GigsService {
     });
 
     await this.indexQueue.add('reindex-gig', { gigId: gig.id });
+    await this.cache.delPattern('gigs:list:*');
 
     return gig;
   }
@@ -274,6 +295,9 @@ export class GigsService {
     });
 
     await this.indexQueue.add('reindex-gig', { gigId: updated.id });
+    await this.cache.del(`gig:slug:${gig.slug}`);
+    if (updated.slug !== gig.slug) await this.cache.del(`gig:slug:${updated.slug}`);
+    await this.cache.delPattern('gigs:list:*');
 
     return updated;
   }
