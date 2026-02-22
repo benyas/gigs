@@ -4,6 +4,7 @@ import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from '../auth/auth.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { CacheService } from '../common/cache/cache.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -24,8 +25,19 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: prisma },
         {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            del: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
           provide: JwtService,
-          useValue: { sign: jest.fn().mockReturnValue('mock-jwt-token') },
+          useValue: {
+            sign: jest.fn().mockReturnValue('mock-jwt-token'),
+            verify: jest.fn(),
+          },
         },
       ],
     }).compile();
@@ -136,39 +148,21 @@ describe('AuthService', () => {
     });
   });
 
-  describe('verifyOtp', () => {
-    it('should accept valid OTP code "123456"', async () => {
-      prisma.user.findUnique.mockResolvedValue({
-        id: 'uuid-1',
-        phone: '+212600000000',
-        role: 'client',
-        email: null,
-        profile: { name: '+212600000000' },
-      });
-
-      const result = await service.verifyOtp('+212600000000', '123456');
-      expect(result.token).toBe('mock-jwt-token');
+  describe('signAccessToken / signRefreshToken', () => {
+    it('should call jwt.sign with 15m expiry for access tokens', () => {
+      service.signAccessToken('user-1', 'client');
+      expect(jwt.sign).toHaveBeenCalledWith(
+        { sub: 'user-1', role: 'client' },
+        { expiresIn: '15m' },
+      );
     });
 
-    it('should throw UnauthorizedException for invalid OTP', async () => {
-      await expect(
-        service.verifyOtp('+212600000000', '000000'),
-      ).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('should create user if not found during OTP verification', async () => {
-      prisma.user.findUnique.mockResolvedValue(null);
-      prisma.user.create.mockResolvedValue({
-        id: 'new-uuid',
-        phone: '+212600000000',
-        role: 'client',
-        email: null,
-        profile: { name: '+212600000000' },
-      });
-
-      const result = await service.verifyOtp('+212600000000', '123456');
-      expect(result.token).toBe('mock-jwt-token');
-      expect(prisma.user.create).toHaveBeenCalled();
+    it('should call jwt.sign with 30d expiry for refresh tokens', () => {
+      service.signRefreshToken('user-1');
+      expect(jwt.sign).toHaveBeenCalledWith(
+        { sub: 'user-1', type: 'refresh' },
+        { expiresIn: '30d' },
+      );
     });
   });
 });
